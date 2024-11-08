@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Music Library{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="bg-secondary rounded-lg shadow-lg p-6 mb-8">
+        <h1 class="text-2xl font-bold mb-6 text-primary">Search Music Library</h1>
+        
+        <!-- Search Form -->
+        <form class="space-y-4 mb-8"
+              hx-get="/search"
+              hx-trigger="submit,change"
+              hx-target="#search-results"
+              hx-indicator="#search-indicator"
+              hx-push-url="true">
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Search Input -->
+                <div class="md:col-span-3">
+                    <label for="search-input" class="block text-sm font-medium text-secondary mb-1">
+                        Search Query
+                    </label>
+                    <input type="text"
+                           id="search-input"
+                           name="q"
+                           value="{{ request.args.get('q', '') }}"
+                           class="w-full rounded-md border-secondary bg-primary text-primary shadow-sm focus:border-accent focus:ring-accent"
+                           placeholder="Enter artist, album, song, or playlist name..."
+                           hx-trigger="keyup changed delay:500ms">
+                </div>
+                
+                <!-- Type Selector -->
+                <div>
+                    <label for="search-type" class="block text-sm font-medium text-secondary mb-1">
+                        Search Type
+                    </label>
+                    <select id="search-type"
+                            name="type"
+                            class="w-full rounded-md border-secondary bg-primary text-primary shadow-sm focus:border-accent focus:ring-accent">
+                        <option value="all" {% if request.args.get('type') == 'all' %}selected{% endif %}>
+                            All Types
+                        </option>
+                        <option value="artist" {% if request.args.get('type') == 'artist' %}selected{% endif %}>
+                            Artists
+                        </option>
+                        <option value="album" {% if request.args.get('type') == 'album' %}selected{% endif %}>
+                            Albums
+                        </option>
+                        <option value="song" {% if request.args.get('type') == 'song' %}selected{% endif %}>
+                            Songs
+                        </option>
+                        <option value="playlist" {% if request.args.get('type') == 'playlist' %}selected{% endif %}>
+                            Playlists
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <!-- Search Indicator -->
+        <div id="search-indicator" class="htmx-indicator flex justify-center py-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+        </div>
+
+        <!-- Filters and Sort Options -->
+        <div id="search-options" class="flex flex-wrap gap-4 mb-6 {% if not results %}hidden{% endif %}">
+            <div class="flex items-center space-x-2">
+                <label class="text-sm text-muted">Sort by:</label>
+                <select class="text-sm rounded border-secondary bg-primary text-primary focus:border-accent focus:ring-accent"
+                        hx-get="/search"
+                        hx-trigger="change"
+                        hx-target="#search-results"
+                        hx-include="[name='q'],[name='type']"
+                        name="sort">
+                    <option value="relevance">Relevance</option>
+                    <option value="name">Name</option>
+                    <option value="date">Date</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="search-results" class="divide-y divide-secondary">
+            {% if results %}
+                {% include "partials/search_results.html" %}
+            {% elif request.args.get('q') %}
+                <div class="text-center py-8">
+                    <p class="text-muted">No results found for "{{ request.args.get('q') }}"</p>
+                    <p class="text-sm text-muted mt-2">Try adjusting your search terms or filters</p>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-muted">Enter your search terms above to begin</p>
+                    <p class="text-sm text-muted mt-2">You can search for artists, albums, songs, or playlists</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Details View -->
+    <div id="details-view" class="bg-secondary rounded-lg shadow-lg p-6 {% if not selected_item %}hidden{% endif %}">
+        {% if selected_item %}
+            {% include selected_item.type + ".html" %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast Messages -->
+<div id="toast-container"
+     class="fixed bottom-4 right-4 space-y-2"
+     hx-trigger="showToast from:body">
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Handle loading states
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        evt.target.closest('form')?.classList.add('opacity-50');
+    });
+    
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        evt.target.closest('form')?.classList.remove('opacity-50');
+    });
+
+    // Handle history navigation
+    window.onpopstate = function() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const query = searchParams.get('q');
+        const type = searchParams.get('type');
+        
+        if (query) {
+            document.getElementById('search-input').value = query;
+        }
+        if (type) {
+            document.getElementById('search-type').value = type;
+        }
+    };
+</script>
+{% endblock %}

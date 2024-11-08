@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
+    <title>Music PWA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Hide fullscreen button when already in fullscreen */
+      :fullscreen #fullscreenButton {
+        display: none;
+      }
+      :-webkit-full-screen #fullscreenButton {
+        display: none;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-gray-100 min-h-screen p-4 flex items-center justify-center overscroll-contain"
+  >
+    <div
+      id="sharedContent"
+      class="fixed top-4 left-4 right-4 bg-white rounded-xl shadow-lg p-4 hidden"
+    >
+      <h3 class="text-lg font-bold mb-2">Shared Content</h3>
+      <p id="sharedUrl" class="text-gray-600 break-all"></p>
+      <button
+        onclick="document.getElementById('sharedContent').classList.add('hidden')"
+        class="mt-2 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors"
+      >
+        Close
+      </button>
+    </div>
+    <button
+      id="fullscreenButton"
+      class="fixed top-4 right-4 px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors z-50"
+      onclick="toggleFullscreen()"
+    >
+      Fullscreen!
+    </button>
+
+    <div
+      class="w-full max-w-md bg-white rounded-xl shadow-lg p-6 overscroll-contain"
+    >
+      <audio id="audioPlayer"></audio>
+
+      <div class="flex items-center mb-6">
+        <img
+          id="trackThumbnail"
+          class="w-16 h-16 rounded-lg mr-4 object-cover"
+          src="/api/placeholder/64/64"
+          alt="Album artwork"
+        />
+        <div>
+          <h2 id="trackTitle" class="text-xl font-bold text-gray-900 mb-1">
+            Loading...
+          </h2>
+          <p id="trackArtist" class="text-gray-600 text-sm mb-1"></p>
+          <p id="trackAlbum" class="text-gray-500 text-sm"></p>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div
+        id="progressContainer"
+        class="w-full h-2 bg-gray-200 rounded-full mb-6 cursor-pointer"
+      >
+        <div
+          id="progressBar"
+          class="h-full bg-black rounded-full w-0 transition-all duration-100"
+        ></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex justify-center items-center gap-4">
+        <button
+          id="unloadButton"
+          class="px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          Unload
+        </button>
+        <button
+          id="prevButton"
+          class="px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+
+        <button
+          id="playButton"
+          class="px-6 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          Play
+        </button>
+
+        <button
+          id="nextButton"
+          class="px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+
+    <script>
+      window.addEventListener("load", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedUrl = urlParams.get("url");
+        const sharedText = urlParams.get("text");
+        const sharedTitle = urlParams.get("title");
+
+        if (sharedUrl || sharedText || sharedTitle) {
+          const sharedContent = document.getElementById("sharedContent");
+          const sharedUrlElement = document.getElementById("sharedUrl");
+
+          let displayText = "";
+          if (sharedUrl) displayText += `URL: ${sharedUrl}\n`;
+          if (sharedText) displayText += `Text: ${sharedText}\n`;
+          if (sharedTitle) displayText += `Title: ${sharedTitle}`;
+
+          sharedUrlElement.textContent = displayText;
+          sharedContent.classList.remove("hidden");
+
+          // Optional: Clean up the URL
+          window.history.replaceState({}, document.title, "/");
+        }
+      });
+
+      window.addEventListener("beforeunload", function (e) {
+        // Check if music is currently playing
+        if (musicPWA && musicPWA.getPlaybackState() === "playing") {
+          // Show alert
+          alert("Warning: Reloading will stop music playback.");
+          // Prevent immediate reload and show browser's confirmation
+          e.preventDefault();
+          e.returnValue = "";
+        }
+      });
+
+      // Also add warning for when closing PWA
+      window.addEventListener("unload", function () {
+        // Pause music playback when closing
+        if (musicPWA && musicPWA.getPlaybackState() === "playing") {
+          musicPWA.pause();
+        }
+      });
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          // Request fullscreen
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            // Safari
+            document.documentElement.webkitRequestFullscreen();
+          }
+        } else {
+          // Exit fullscreen
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            // Safari
+            document.webkitExitFullscreen();
+          }
+        }
+      }
+
+      // Auto-enable fullscreen when the page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        // Try to automatically enter fullscreen mode
+        toggleFullscreen();
+      });
+
+      // Handle orientation change
+      window.addEventListener("orientationchange", function () {
+        // Re-enable fullscreen after orientation change
+        setTimeout(toggleFullscreen, 300);
+      });
+
+      // Handle visibility change
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible") {
+          // Re-enable fullscreen when tab becomes visible
+          toggleFullscreen();
+        }
+      });
+
+      // Add this to your existing service worker registration
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .then((registration) => {
+              console.log("ServiceWorker registration successful");
+            })
+            .catch((err) => {
+              console.log("ServiceWorker registration failed: ", err);
+            });
+
+          // Request persistent storage to maintain fullscreen preference
+          if (navigator.storage && navigator.storage.persist) {
+            navigator.storage.persist().then((granted) => {
+              console.log("Persistent storage granted:", granted);
+            });
+          }
+        });
+      }
+    </script>
+    <script src="/musicPlayer.js"></script>
+    <script>
+      // DOM Elements
+      const playButton = document.getElementById("playButton");
+      const unloadButton = document.getElementById("unloadButton");
+      const prevButton = document.getElementById("prevButton");
+      const nextButton = document.getElementById("nextButton");
+      const trackTitle = document.getElementById("trackTitle");
+      const trackArtist = document.getElementById("trackArtist");
+      const trackAlbum = document.getElementById("trackAlbum");
+      const trackThumbnail = document.getElementById("trackThumbnail");
+      const progressBar = document.getElementById("progressBar");
+      const progressContainer = document.getElementById("progressContainer");
+      const audioPlayer = document.getElementById("audioPlayer");
+
+      // Sample playlist with new structure
+      const playlist = [
+        {
+          order: 1,
+          title: "Lustration",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "OLAK5uy_nLjCDhK5cb6IN94UPlo0nBw6iA9lxElc0",
+              },
+            },
+            year: null,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 364,
+          thumbnail: {
+            url: "https://i.ytimg.com/vi/9f1hkyqKHNs/hq720.jpg?sqp=-oaymwEXCNUGEOADIAQqCwjVARCqCBh4INgESFo&rs=AMzJL3mLKrE81k5KTB7vfUCVRjqzbUGO_w",
+          },
+          sources: {
+            ytmusic: {
+              id: "9f1hkyqKHNs",
+              url: "https://rr3---sn-q4flrnle.googlevideo.com/videoplayback?expire=1731107310&ei=jkUuZ7rkK7boybgPg5bS6Qc&ip=45.20.193.255&id=o-AEkfa2n65dBJRYwMAaXLBKbJAyMMbKcOnYwa5xYwqoPh&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085710%2C&mh=Wh&mm=31%2C29&mn=sn-q4flrnle%2Csn-q4fl6n6y&ms=au%2Crdu&mv=m&mvi=3&pl=18&rms=au%2Cau&initcwndbps=623750&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=6111230&dur=363.901&lmt=1714522920741993&mt=1731085273&fvip=1&keepalive=yes&fexp=51299153%2C51312688%2C51326932&c=IOS&txp=4402434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgansnHagtZOvWUhuDzWAdpqfVj3zzcLUwWzMRvSehqAQCIQC6UAiytWv8LGCkoSQxzYJEfRVWxsEsKV99eFk6-P5iJw%3D%3D&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRQIhALXuJMJlhHeQVR9DnbXCMMhyH2G10xPw_hjrDUNEEOsyAiAEErtTvgvn0pjatKhHGWsHLpD7Q_cA95MdFeaL2x56cA%3D%3D",
+            },
+          },
+        },
+        {
+          order: 2,
+          title: "Never Tell A Soul",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "MPREb_RJ0FvcwwtMM",
+              },
+            },
+            year: 2017,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 230,
+          thumbnail: {
+            url: "https://lh3.googleusercontent.com/NTIWAB5F8l_up9U5LcChXCK4e7pGj8vmeUM2M4hQMML1GB8nPWlnVfrh0VWjtcN6TY52qLSfBoP9HHdm7A=w544-h544-l90-rj",
+          },
+          sources: {
+            ytmusic: {
+              id: "_wxqulcXCzg",
+              url: "https://rr5---sn-q4fl6nz6.googlevideo.com/videoplayback?expire=1731107312&ei=kEUuZ6mDGvaUir4Poqm88QY&ip=45.20.193.255&id=o-AJcigHUJvaOrNzGFJNhUyI3s9dYwztFG7ll-QMVjOT9_&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085712%2C&mh=Fj&mm=31%2C29&mn=sn-q4fl6nz6%2Csn-q4flrnes&ms=au%2Crdu&mv=m&mvi=5&pl=18&rms=au%2Cau&gcr=us&initcwndbps=621250&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=3820706&dur=229.081&lmt=1714703626332035&mt=1731085273&fvip=3&keepalive=yes&fexp=51312688%2C51326932&c=IOS&txp=2318224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgTLiIQ8iD_cPFlfllhNDW6CUPdz9y8QQN5STGkxjHZ5gCICjkdWRyCZqSzaJX-X9010tX_iV4n3JdvT9Tv6yW0zxi&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRAIgb7lEbWzQJjj79nphaWJaUm6t-9pj4YE0DVL2VJl472kCIA2Y5Ab9FJaeKw_0f3oN6hHCmX8SR4ILpjilAhdE4QeC",
+            },
+          },
+        },
+        {
+          order: 3,
+          title: "Premonition of the Hex",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "OLAK5uy_nLjCDhK5cb6IN94UPlo0nBw6iA9lxElc0",
+              },
+            },
+            year: null,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 236,
+          thumbnail: {
+            url: "https://i.ytimg.com/vi/oWYaTxWZt68/hq720.jpg?sqp=-oaymwEXCNUGEOADIAQqCwjVARCqCBh4INgESFo&rs=AMzJL3khgAi5tMy17WqcoOSLXXAInGBUuQ",
+          },
+          sources: {
+            ytmusic: {
+              id: "oWYaTxWZt68",
+              url: "https://rr3---sn-q4fl6nds.googlevideo.com/videoplayback?expire=1731107314&ei=kkUuZ_z7E8DpybgP6v_2iAQ&ip=45.20.193.255&id=o-AP44TDWkh4LVcx3kUk2l67fy4WuZqUoFQ85SdUgNuODn&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085714%2C&mh=8O&mm=31%2C26&mn=sn-q4fl6nds%2Csn-vgqsknz7&ms=au%2Conr&mv=m&mvi=3&pl=18&rms=au%2Cau&initcwndbps=623750&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=3936965&dur=235.521&lmt=1714850550369801&mt=1731085273&fvip=1&keepalive=yes&fexp=51312688%2C51326932&c=IOS&txp=4402434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRgIhAIvYJBzRAvt3URWB0yE96x6K6vYT1-N7M6i9If_QyOTSAiEA2T8-HmN1TgzKXIbl-5eXTt2Zg1QwN0xnmh4bhQoas3g%3D&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRgIhAP8JKgeKhvP5QSQIkBtdgBVc9lmHMMY0jdQNhIEpVTltAiEA-vcz4fGe9pnpbE0-Agr5DWuGImUW8XWNby7DXp4uLrM%3D",
+            },
+          },
+        },
+        {
+          order: 4,
+          title: "Tunnel Vision",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "MPREb_RJ0FvcwwtMM",
+              },
+            },
+            year: 2017,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 216,
+          thumbnail: {
+            url: "https://lh3.googleusercontent.com/NTIWAB5F8l_up9U5LcChXCK4e7pGj8vmeUM2M4hQMML1GB8nPWlnVfrh0VWjtcN6TY52qLSfBoP9HHdm7A=w544-h544-l90-rj",
+          },
+          sources: {
+            ytmusic: {
+              id: "iBMEiKjWeDQ",
+              url: "https://rr4---sn-q4fl6nd7.googlevideo.com/videoplayback?expire=1731107316&ei=lEUuZ7LPC8WIir4Ps9mR4QY&ip=45.20.193.255&id=o-APyEkJflZODGiyhMns0qM6VblIclL8EwE-b9OeVt1pxe&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085716%2C&mh=yN&mm=31%2C29&mn=sn-q4fl6nd7%2Csn-q4flrn7k&ms=au%2Crdu&mv=m&mvi=4&pl=18&rms=au%2Cau&gcr=us&initcwndbps=631250&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=3621910&dur=215.421&lmt=1714780497122652&mt=1731085273&fvip=2&keepalive=yes&fexp=51312688%2C51326932&c=IOS&txp=2318224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgVvgzqJ9fyD3-eibyIFewh3UT7dvO1uSqTebgZfvufUECIEP1YAwh4b_Ef3xx84M9aZQFUFCxz-TtgOi9DtwoAi6R&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRQIgYQeOS5PS8r0E_5eAeW_UF466G7CGtezT3YrcS-K3gK8CIQC3bSzRqZRT48HEuMVN-eaHT13oJgdCO-PUwclFTCsmsA%3D%3D",
+            },
+          },
+        },
+        {
+          order: 5,
+          title: "At Night It Gets Worse",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "MPREb_RJ0FvcwwtMM",
+              },
+            },
+            year: 2017,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 355,
+          thumbnail: {
+            url: "https://lh3.googleusercontent.com/NTIWAB5F8l_up9U5LcChXCK4e7pGj8vmeUM2M4hQMML1GB8nPWlnVfrh0VWjtcN6TY52qLSfBoP9HHdm7A=w544-h544-l90-rj",
+          },
+          sources: {
+            ytmusic: {
+              id: "sptRErUJbos",
+              url: "https://rr2---sn-q4flrn7r.googlevideo.com/videoplayback?expire=1731107318&ei=lkUuZ-7MBtmlir4P8KfY8QE&ip=45.20.193.255&id=o-AJh8cl3W_A6sG89tQycAPuNNN2QZMDOLyxHCZCogWsRV&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085718%2C&mh=6l&mm=31%2C29&mn=sn-q4flrn7r%2Csn-q4fl6nde&ms=au%2Crdu&mv=m&mvi=2&pl=18&rms=au%2Cau&gcr=us&initcwndbps=591250&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=5932332&dur=354.041&lmt=1714876932417782&mt=1731085515&fvip=2&keepalive=yes&fexp=51312688%2C51326932&c=IOS&txp=2318224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgD8oHcceTwf6YmN38bOF-OZ2_e_hSh1dE9tJo12u_C6ECIHjZGWosvebpcdldlJD86m7wTLGJnZAho365wG07PbK4&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRQIhANvscuxfON2ByEvCowmY3DkhbeCkjbpVQJaK8yoZk6EMAiAzHl6VM_VWpitOf6NH-sxA8hnHp__wNgpI7VxRZcyl_w%3D%3D",
+            },
+          },
+        },
+        {
+          order: 6,
+          title: "Stay",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "MPREb_RJ0FvcwwtMM",
+              },
+            },
+            year: 2017,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 159,
+          thumbnail: {
+            url: "https://lh3.googleusercontent.com/NTIWAB5F8l_up9U5LcChXCK4e7pGj8vmeUM2M4hQMML1GB8nPWlnVfrh0VWjtcN6TY52qLSfBoP9HHdm7A=w544-h544-l90-rj",
+          },
+          sources: {
+            ytmusic: {
+              id: "gC6cbm6T6-0",
+              url: "https://rr2---sn-q4fl6nsr.googlevideo.com/videoplayback?expire=1731107319&ei=l0UuZ-LENtm2ir4PuKOZyAE&ip=45.20.193.255&id=o-AAqMdEEaOxVTOAS-RSm81vvOIsT-VMWEZ3o-agPEuqAu&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085719%2C&mh=X7&mm=31%2C26&mn=sn-q4fl6nsr%2Csn-vgqskne6&ms=au%2Conr&mv=m&mvi=2&pl=18&rms=au%2Cau&gcr=us&initcwndbps=661250&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=2651478&dur=158.261&lmt=1714762376422332&mt=1731085273&fvip=2&keepalive=yes&fexp=51312688%2C51326932&c=IOS&txp=2318224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgbt9QJvFn402y0HXSR1pKNCEJjnwRYjxEz4AaSwyw4ZsCID9aPdPYPYTF5Mr_2H5PxlqPoTCPfFbBsivIQ_HW5SUu&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=AGluJ3MwRQIgBvQeVobiUl6llRL67Gqt4YfFfv7Zyvk5-bY2-IBCiYYCIQDUFrywHjesNSV4ftzafp-2ve-fxuYGBxAa0EpLRK-ZXA%3D%3D",
+            },
+          },
+        },
+        {
+          order: 7,
+          title: "Rites of Investiture",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "OLAK5uy_nLjCDhK5cb6IN94UPlo0nBw6iA9lxElc0",
+              },
+            },
+            year: null,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 251,
+          thumbnail: {
+            url: "https://i.ytimg.com/vi/58HY9OCLx40/sddefault.jpg?sqp=-oaymwEWCKoDEPABIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3k0_yAq0oQsv5tUpnfpVJdLpJs-jw",
+          },
+          sources: {
+            ytmusic: {
+              id: "58HY9OCLx40",
+              url: "https://rr5---sn-q4fl6ndl.googlevideo.com/videoplayback?expire=1731107321&ei=mUUuZ7j9NcC2ir4Pk_idqAc&ip=45.20.193.255&id=o-AA_TXR04ZmctwNgPfsu7wtm_LjPMV1bYWAwHy8nB6EUk&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085721%2C&mh=mo&mm=31%2C29&mn=sn-q4fl6ndl%2Csn-q4flrnlz&ms=au%2Crdu&mv=m&mvi=5&pl=18&rms=au%2Cau&initcwndbps=623750&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=4080663&dur=250.581&lmt=1714471928377238&mt=1731085273&fvip=3&keepalive=yes&fexp=51299153%2C51312688%2C51326932&c=IOS&txp=4402434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgFDQNj3H3M8S6lPGcZ9U86o08V96XYx7rxdn6RVa61C4CID-VLEgfMmAS5lOnIS7CbgsxnW2PbHijvr9c-XhfjrN-&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRAIgYppQZRtwtWHvnOfGW5ExilivrD_ODtJRkS1RXG_G4swCIHRw6cHFpRxkvdHFpgtIq2IRmcj0dpadceFewu-7W6jI",
+            },
+          },
+        },
+        {
+          order: 8,
+          title: "The Hex",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "MPREb_RJ0FvcwwtMM",
+              },
+            },
+            year: 2017,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 227,
+          thumbnail: {
+            url: "https://lh3.googleusercontent.com/NTIWAB5F8l_up9U5LcChXCK4e7pGj8vmeUM2M4hQMML1GB8nPWlnVfrh0VWjtcN6TY52qLSfBoP9HHdm7A=w544-h544-l90-rj",
+          },
+          sources: {
+            ytmusic: {
+              id: "jZ8reoqhDBE",
+              url: "https://rr2---sn-q4fzene7.googlevideo.com/videoplayback?expire=1731107324&ei=nEUuZ5-9GIaNir4PhoCrmQQ&ip=45.20.193.255&id=o-AGS2VTdtz2sia30v7laeXg0UEotrcWlPFR3A4qcqcBG-&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085724%2C&mh=Ud&mm=31%2C29&mn=sn-q4fzene7%2Csn-q4fl6n6s&ms=au%2Crdu&mv=m&mvi=2&pl=18&rms=au%2Cau&gcr=us&initcwndbps=591250&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=3889537&dur=226.261&lmt=1714788167518497&mt=1731085515&fvip=2&keepalive=yes&fexp=51312688%2C51326932&c=IOS&txp=2318224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgGnL2rMrQYPlKBUZ9XGM0eIoJVqMTBfVXB4mu8TmaQqkCIEUdVElqObxM8AOMrH0LOELnX2pS1ruO0OhSMOnYrXGn&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=AGluJ3MwRgIhAKrQt5lXAl_SW3kyi-RuB2FOzkUbEkoGXet5tWeKTbH5AiEA2gAlCinmx3n4ri--pVy5aVfjB5CpUwvfvPqGT2hIc1Y%3D",
+            },
+          },
+        },
+        {
+          order: 9,
+          title: "Flesh and Bone",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "OLAK5uy_nLjCDhK5cb6IN94UPlo0nBw6iA9lxElc0",
+              },
+            },
+            year: null,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 361,
+          thumbnail: {
+            url: "https://i.ytimg.com/vi/Sy2-T08yvWs/hq720.jpg?sqp=-oaymwEXCNUGEOADIAQqCwjVARCqCBh4INgESFo&rs=AMzJL3mDfojw-GbNCdCNwWKEDbWNfv8dzA",
+          },
+          sources: {
+            ytmusic: {
+              id: "Sy2-T08yvWs",
+              url: "https://rr4---sn-q4flrnsk.googlevideo.com/videoplayback?expire=1731107326&ei=nkUuZ6LBEZy3ir4Pgv2xyAc&ip=45.20.193.255&id=o-AKIcTUJNF7YHouzToCHXigmU28Bf-C_wHsKYPBZ05kwt&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085726%2C&mh=fT&mm=31%2C26&mn=sn-q4flrnsk%2Csn-vgqsknll&ms=au%2Conr&mv=m&mvi=4&pl=18&rms=au%2Cau&initcwndbps=628750&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=5954978&dur=360.141&lmt=1714641932633561&mt=1731085273&fvip=2&keepalive=yes&fexp=51299154%2C51312688%2C51326932&c=IOS&txp=4502434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgMVCeywOhgl_foWTG-qx4RZO-8ME1P5oW9lsSX8dmIswCIQDTrL2DKA7dmqbj0taj0p8p-VtIOYrhubGVFvVLdYuG1Q%3D%3D&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRQIhAOdmfr0J_a-HWH7KaHvT159zaaYroEl-bjeP1TJrK1vjAiBn8Pqhlwln9Lqqoxd1-9GhBdZfx36SkCbi4YH7bmtBTg%3D%3D",
+            },
+          },
+        },
+        {
+          order: 10,
+          title: "The Amulet",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "OLAK5uy_nLjCDhK5cb6IN94UPlo0nBw6iA9lxElc0",
+              },
+            },
+            year: null,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 268,
+          thumbnail: {
+            url: "https://i.ytimg.com/vi/tuPHC5XUAr0/hq720.jpg?sqp=-oaymwEXCNUGEOADIAQqCwjVARCqCBh4INgESFo&rs=AMzJL3m0f_QDp1f7VnWBsg5FrDE2l_ywJw",
+          },
+          sources: {
+            ytmusic: {
+              id: "tuPHC5XUAr0",
+              url: "https://rr3---sn-q4fl6n6d.googlevideo.com/videoplayback?expire=1731107328&ei=oEUuZ63EDsDoybgP7svTqA4&ip=45.20.193.255&id=o-AM6Qa7nw_tr2s_zyE_3OJkt-O7a6pLq3xXbV0AQgHAIR&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085728%2C&mh=Iq&mm=31%2C26&mn=sn-q4fl6n6d%2Csn-vgqsrnlk&ms=au%2Conr&mv=m&mvi=3&pl=18&rms=au%2Cau&initcwndbps=593750&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=4470293&dur=267.141&lmt=1714881184483088&mt=1731085515&fvip=5&keepalive=yes&fexp=51299154%2C51312688%2C51326932&c=IOS&txp=4402434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRgIhANcce1FAKQ7oqJB5IBloDiMHCL4U8wTVVnz6F3_Ce-hVAiEA_oj11DUfGFUgPjMjH3-Llrp24CvtTGay48L8psakx44%3D&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRQIhANQobwq3asds4rVFJxXvwYAq8G3_zqqsMpsdmHtUJ0nIAiB45kmO3Nkk3G09G9rY6O80mh5touEEdY-jTWpUsSipAg%3D%3D",
+            },
+          },
+        },
+        {
+          order: 11,
+          title: "Dark Pools",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "OLAK5uy_nLjCDhK5cb6IN94UPlo0nBw6iA9lxElc0",
+              },
+            },
+            year: null,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 290,
+          thumbnail: {
+            url: "https://i.ytimg.com/vi/wRQd6VOXq_c/hq720.jpg?sqp=-oaymwEXCNUGEOADIAQqCwjVARCqCBh4INgESFo&rs=AMzJL3n7TPe_DbwXAiJPtzX-pCU7s6WAFQ",
+          },
+          sources: {
+            ytmusic: {
+              id: "wRQd6VOXq_c",
+              url: "https://rr2---sn-q4flrnl7.googlevideo.com/videoplayback?expire=1731107330&ei=okUuZ9XFHaOkir4PmurjyAc&ip=45.20.193.255&id=o-ACk5hcpoUlCEiICCqKMYZoq6iua1z1tMT-v-NGbFtCIF&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085730%2C&mh=wb&mm=31%2C29&mn=sn-q4flrnl7%2Csn-q4fl6n6s&ms=au%2Crdu&mv=m&mvi=2&pl=18&rms=au%2Cau&initcwndbps=623750&vprv=1&c=IOS&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=4988082&dur=289.801&lmt=1714901674331873&mt=1731085273&fvip=5&keepalive=yes&fexp=51299154%2C51312688%2C51326932&txp=4502434&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cvprv%2Cc%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRAIgLtbC7m1N5gmRbPnsGmjdznBRzAnvmlJjpbSnezFBYHQCIDJ5O4lSr2ZEiwRUwIDCFlJi5gwOFE_7CHFxgTJF8MQc&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRQIhAPbVF3qnMKDuJDr2XaCVrG_uLBMaJXt1fRAWUEVkJa8WAiBUGtdusyQqyiLyP2WFmuXcUL4eNjTrA5EPmE8LM51oPw%3D%3D",
+            },
+          },
+        },
+        {
+          order: 12,
+          title: "Indra's Net",
+          album: {
+            name: "The Amulet (Deluxe)",
+            sources: {
+              ytmusic: {
+                id: "MPREb_RJ0FvcwwtMM",
+              },
+            },
+            year: 2017,
+            artists: [
+              {
+                name: "Circa Survive",
+                sources: {
+                  ytmusic: {
+                    id: "UCm_ZP5mgbFdWqAKvjOHNxGg",
+                  },
+                },
+              },
+            ],
+          },
+          duration: 299,
+          thumbnail: {
+            url: "https://lh3.googleusercontent.com/NTIWAB5F8l_up9U5LcChXCK4e7pGj8vmeUM2M4hQMML1GB8nPWlnVfrh0VWjtcN6TY52qLSfBoP9HHdm7A=w544-h544-l90-rj",
+          },
+          sources: {
+            ytmusic: {
+              id: "wpRv_Yz7Zb4",
+              url: "https://rr2---sn-q4fzen7r.googlevideo.com/videoplayback?expire=1731107332&ei=pEUuZ4aXMbOsir4P5oa3yQ0&ip=45.20.193.255&id=o-AO-NUXJZ8vcmws5E9BrnOdoN3Wehzls_b-w_xEUv7xRZ&itag=251&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&met=1731085732%2C&mh=n-&mm=31%2C26&mn=sn-q4fzen7r%2Csn-vgqsrnsd&ms=au%2Conr&mv=m&mvi=2&pl=18&rms=au%2Cau&gcr=us&initcwndbps=593750&vprv=1&svpuc=1&mime=audio%2Fwebm&rqh=1&gir=yes&clen=4889529&dur=298.261&lmt=1714905400571361&mt=1731085515&fvip=2&keepalive=yes&fexp=51312688%2C51326932&c=IOS&txp=2318224&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cgcr%2Cvprv%2Csvpuc%2Cmime%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIhAOkrF2NoKBefQUXfTXVuGpntH06BEPotsOJ7Ayz0K6XqAiBElbBHe3Y3u9XG0x6ECl-nTZN6Myr7N6RQXbfFTU7phA%3D%3D&lsparams=met%2Cmh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Crms%2Cinitcwndbps&lsig=ACJ0pHgwRgIhAPORp0TeUmYr4aCSpf9WD4dLPzUoDRd9gsi1EX2pt94SAiEA9muNs5s-rMQ1ZfLIou9wbsURZYXza7Vbz9916qyfw1A%3D",
+            },
+          },
+        },
+      ];
+
+      // Initialize musicPWA
+      musicPWA.init({
+        audioElement: audioPlayer,
+        playlist: playlist,
+        onTrackChange: (track) => {
+          trackTitle.textContent = track.title;
+          trackArtist.textContent = track.album.artists
+            .map((artist) => artist.name)
+            .join(", ");
+          trackAlbum.textContent = `${track.album.name} (${track.album.year})`;
+          trackThumbnail.src = track.thumbnail?.url || "/api/placeholder/64/64";
+          updatePlayButton();
+        },
+        onPlaybackStateChange: (state) => {
+          updatePlayButton();
+        },
+      });
+
+      // Event Listeners
+      playButton.addEventListener("click", () => {
+        if (musicPWA.getPlaybackState() === "playing") {
+          musicPWA.pause();
+        } else {
+          musicPWA.play();
+        }
+      });
+
+      unloadButton.addEventListener("click", () => {
+        musicPWA.cleanup();
+      });
+
+      prevButton.addEventListener("click", () => {
+        musicPWA.previous();
+      });
+
+      nextButton.addEventListener("click", () => {
+        musicPWA.next();
+      });
+
+      // Progress bar
+      progressContainer.addEventListener("click", (e) => {
+        const rect = progressContainer.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        const duration = audioPlayer.duration;
+        musicPWA.seek(duration * pos);
+      });
+
+      // Update progress bar
+      audioPlayer.addEventListener("timeupdate", () => {
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.style.width = `${progress}%`;
+      });
+
+      // Helper function to update play button state
+      function updatePlayButton() {
+        const isPlaying = musicPWA.getPlaybackState() === "playing";
+        playButton.textContent = isPlaying ? "Pause" : "Play";
+      }
+
+      // Update UI for initial track
+      const initialTrack = musicPWA.getCurrentTrack();
+      if (initialTrack) {
+        trackTitle.textContent = initialTrack.title;
+        trackArtist.textContent = initialTrack.album.artists
+          .map((artist) => artist.name)
+          .join(", ");
+        trackAlbum.textContent = `${initialTrack.album.name} (${initialTrack.album.year})`;
+        trackThumbnail.src =
+          initialTrack.thumbnail?.url || "/api/placeholder/64/64";
+      }
+    </script>
+    <script>
+      // Register service worker
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .then((registration) => {
+              console.log("ServiceWorker registration successful");
+            })
+            .catch((err) => {
+              console.log("ServiceWorker registration failed: ", err);
+            });
+        });
+      }
+
+      // Handle PWA installation
+      let deferredPrompt;
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
+        e.preventDefault();
+        // Stash the event so it can be triggered later
+        deferredPrompt = e;
+      });
+
+      // Optional: Add an install button if you want manual installation
+      // const installButton = document.createElement('button');
+      // installButton.textContent = 'Install App';
+      // installButton.className = 'px-4 py-2 rounded-full bg-black text-white hover:bg-gray-800 transition-colors';
+      // installButton.onclick = async () => {
+      //     if (deferredPrompt) {
+      //         deferredPrompt.prompt();
+      //         const { outcome } = await deferredPrompt.userChoice;
+      //         console.log(`User response to the install prompt: ${outcome}`);
+      //         deferredPrompt = null;
+      //     }
+      // };
+      // document.querySelector('.controls').appendChild(installButton);
+    </script>
+  </body>
+</html>
