@@ -1,0 +1,788 @@
+<div id="audio-player" class="w-full">
+  <audio id="audio-element" preload="metadata"></audio>
+
+  <div class="relative h-1 bg-secondary-200">
+    <div
+      id="progress-bar"
+      class="absolute left-0 top-0 h-full bg-accent rounded-full"
+      style="width: 0%"
+    ></div>
+    <div
+      id="progress-handle"
+      class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-accent rounded-full shadow-lg cursor-pointer hover:scale-110 transition-transform"
+      style="left: 0%"
+    ></div>
+  </div>
+
+  <div class="grid grid-cols-3 gap-4 px-4 py-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <img
+        id="track-artwork"
+        src="/api/placeholder/48/48"
+        alt="Album Art"
+        class="w-12 h-12 rounded-md shadow-sm"
+      />
+      <div class="min-w-0">
+        <h3 id="track-name" class="text-primary font-medium truncate">
+          No track selected
+        </h3>
+        <p id="track-artist" class="text-secondary text-sm truncate">
+          Select a track to begin
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-center gap-6">
+      <button
+        id="previous-button"
+        class="text-secondary hover:text-primary transition-colors"
+        title="Previous track"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"
+          />
+        </svg>
+      </button>
+
+      <button
+        id="play-pause-button"
+        class="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center hover:bg-accent-light transition-colors"
+      >
+        <svg
+          id="play-icon"
+          class="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <svg
+          id="pause-icon"
+          class="w-6 h-6 hidden"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      </button>
+
+      <button
+        id="next-button"
+        class="text-secondary hover:text-primary transition-colors"
+        title="Next track"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.334-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <div class="flex items-center justify-end gap-4">
+      <div class="hidden sm:block text-sm text-secondary">
+        <span id="current-time">0:00</span>
+        <span class="mx-1">/</span>
+        <span id="duration">0:00</span>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-2">
+        <button
+          id="mute-button"
+          class="text-secondary hover:text-primary transition-colors"
+        >
+          <svg
+            id="volume-icon"
+            class="w-5 h-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+            />
+          </svg>
+          <svg
+            id="mute-icon"
+            class="w-5 h-5 hidden"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+            />
+          </svg>
+        </button>
+        <input
+          type="range"
+          id="volume-slider"
+          min="0"
+          max="100"
+          value="100"
+          class="w-20 h-1 bg-secondary-200 rounded-full appearance-none cursor-pointer"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const AudioPlayer = (function () {
+    let audioElement;
+    let playlist = [];
+    let currentTrackIndex = -1;
+    let isPlaying = false;
+
+    // DOM Elements
+    let progressBar;
+    let progressHandle;
+    let playPauseButton;
+    let playIcon;
+    let pauseIcon;
+    let volumeSlider;
+    let volumeIcon;
+    let muteIcon;
+    let muteButton;
+    let currentTimeDisplay;
+    let durationDisplay;
+    let trackName;
+    let trackArtist;
+    let trackArtwork;
+    let previousButton; // Added
+    let nextButton; // Added
+
+    function init(config = {}) {
+      const {
+        audioElementId = "audio-element",
+        progressBarId = "progress-bar",
+        progressHandleId = "progress-handle",
+        playPauseButtonId = "play-pause-button",
+        playIconId = "play-icon",
+        pauseIconId = "pause-icon",
+        volumeSliderId = "volume-slider",
+        volumeIconId = "volume-icon",
+        muteIconId = "mute-icon",
+        muteButtonId = "mute-button",
+        currentTimeDisplayId = "current-time",
+        durationDisplayId = "duration",
+        trackNameId = "track-name",
+        trackArtistId = "track-artist",
+        trackArtworkId = "track-artwork",
+        previousButtonId = "previous-button", // Added
+        nextButtonId = "next-button", // Added
+      } = config;
+
+      // Get DOM elements
+      audioElement = document.getElementById(audioElementId);
+      progressBar = document.getElementById(progressBarId);
+      progressHandle = document.getElementById(progressHandleId);
+      playPauseButton = document.getElementById(playPauseButtonId);
+      playIcon = document.getElementById(playIconId);
+      pauseIcon = document.getElementById(pauseIconId);
+      volumeSlider = document.getElementById(volumeSliderId);
+      volumeIcon = document.getElementById(volumeIconId);
+      muteIcon = document.getElementById(muteIconId);
+      muteButton = document.getElementById(muteButtonId);
+      currentTimeDisplay = document.getElementById(currentTimeDisplayId);
+      durationDisplay = document.getElementById(durationDisplayId);
+      trackName = document.getElementById(trackNameId);
+      trackArtist = document.getElementById(trackArtistId);
+      trackArtwork = document.getElementById(trackArtworkId);
+      previousButton = document.getElementById(previousButtonId); // Added
+      nextButton = document.getElementById(nextButtonId); // Added
+
+      // Verify elements exist
+      const requiredElements = [
+        { element: audioElement, name: "Audio Element" },
+        { element: progressBar, name: "Progress Bar" },
+        { element: progressHandle, name: "Progress Handle" },
+        { element: playPauseButton, name: "Play/Pause Button" },
+        { element: playIcon, name: "Play Icon" },
+        { element: pauseIcon, name: "Pause Icon" },
+        { element: volumeSlider, name: "Volume Slider" },
+        { element: volumeIcon, name: "Volume Icon" },
+        { element: muteIcon, name: "Mute Icon" },
+        { element: muteButton, name: "Mute Button" },
+        { element: currentTimeDisplay, name: "Current Time Display" },
+        { element: durationDisplay, name: "Duration Display" },
+        { element: trackName, name: "Track Name" },
+        { element: trackArtist, name: "Track Artist" },
+        { element: trackArtwork, name: "Track Artwork" },
+        { element: previousButton, name: "Previous Button" }, // Added
+        { element: nextButton, name: "Next Button" }, // Added
+      ];
+
+      const missingElements = requiredElements
+        .filter(({ element }) => !element)
+        .map(({ name }) => name);
+
+      if (missingElements.length > 0) {
+        throw new Error(
+          `Missing required elements: ${missingElements.join(", ")}`,
+        );
+      }
+
+      setupEventListeners();
+    }
+
+    function setupEventListeners() {
+      audioElement.addEventListener("timeupdate", updateProgress);
+      audioElement.addEventListener("ended", () => next());
+      audioElement.addEventListener("loadedmetadata", updateDuration);
+      progressBar.parentElement.addEventListener("click", seekToPosition);
+      progressHandle.addEventListener("mousedown", startDragging);
+      volumeSlider.addEventListener("input", updateVolume);
+      muteButton.addEventListener("click", toggleMute);
+      playPauseButton.addEventListener("click", toggle);
+      previousButton.addEventListener("click", previous); // Added
+      nextButton.addEventListener("click", next); // Added
+    }
+
+    function startDragging(e) {
+      const handleDrag = (e) => {
+        const container = progressBar.parentElement;
+        const rect = container.getBoundingClientRect();
+        const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const percentage = (x / rect.width) * 100;
+
+        updateProgressPosition(percentage);
+        audioElement.currentTime = (percentage / 100) * audioElement.duration;
+      };
+
+      const stopDragging = () => {
+        document.removeEventListener("mousemove", handleDrag);
+        document.removeEventListener("mouseup", stopDragging);
+      };
+
+      document.addEventListener("mousemove", handleDrag);
+      document.addEventListener("mouseup", stopDragging);
+    }
+
+    function updateProgress() {
+      if (!audioElement.duration) return;
+      const percentage =
+        (audioElement.currentTime / audioElement.duration) * 100;
+      updateProgressPosition(percentage);
+      updateTimeDisplay();
+    }
+
+    function updateProgressPosition(percentage) {
+      progressBar.style.width = `${percentage}%`;
+      progressHandle.style.left = `${percentage}%`;
+    }
+
+    function seekToPosition(e) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = (x / rect.width) * 100;
+
+      updateProgressPosition(percentage);
+      audioElement.currentTime = (percentage / 100) * audioElement.duration;
+    }
+
+    function updateVolume() {
+      const volume = volumeSlider.value / 100;
+      audioElement.volume = volume;
+      updateVolumeIcon(volume);
+    }
+
+    function updateVolumeIcon(volume) {
+      volumeIcon.classList.toggle("hidden", volume === 0);
+      muteIcon.classList.toggle("hidden", volume > 0);
+    }
+
+    function toggleMute() {
+      const wasMuted = audioElement.volume === 0;
+      audioElement.volume = wasMuted ? volumeSlider.value / 100 : 0;
+      updateVolumeIcon(audioElement.volume);
+    }
+
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = Math.floor(seconds % 60);
+      return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+    }
+
+    function updateTimeDisplay() {
+      currentTimeDisplay.textContent = formatTime(audioElement.currentTime);
+    }
+
+    function updateDuration() {
+      durationDisplay.textContent = formatTime(audioElement.duration);
+    }
+
+    function updateTrackInfo(track) {
+      trackName.textContent = track.name;
+      trackArtist.textContent = track.album.artists
+        .map((artist) => artist.name)
+        .join(", ");
+      trackArtwork.src = track.thumbnail.url;
+    }
+
+    function play() {
+      if (currentTrackIndex === -1 && playlist.length > 0) {
+        currentTrackIndex = 0;
+        loadTrack(currentTrackIndex);
+      }
+      audioElement.play();
+      isPlaying = true;
+      playIcon.classList.add("hidden");
+      pauseIcon.classList.remove("hidden");
+    }
+
+    function pause() {
+      audioElement.pause();
+      isPlaying = false;
+      playIcon.classList.remove("hidden");
+      pauseIcon.classList.add("hidden");
+    }
+
+    function toggle() {
+      if (isPlaying) {
+        pause();
+      } else {
+        play();
+      }
+    }
+
+    function next() {
+      if (playlist.length === 0) return;
+      currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+      loadTrack(currentTrackIndex);
+      if (isPlaying) play();
+    }
+
+    function previous() {
+      if (playlist.length === 0) return;
+      currentTrackIndex =
+        (currentTrackIndex - 1 + playlist.length) % playlist.length;
+      loadTrack(currentTrackIndex);
+      if (isPlaying) play();
+    }
+
+    function loadTrack(index) {
+      const track = playlist[index];
+      if (!track) return;
+
+      const url = track.sources.ytmusic.url;
+      const proxyUrl = `/api/get/${url}`;
+
+      audioElement.src = proxyUrl;
+      updateTrackInfo(track);
+      updateProgressPosition(0);
+    }
+
+    function next() {
+      if (playlist.length === 0) return;
+      currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+      loadTrack(currentTrackIndex);
+      if (isPlaying) play();
+    }
+
+    function previous() {
+      if (playlist.length === 0) return;
+      currentTrackIndex =
+        (currentTrackIndex - 1 + playlist.length) % playlist.length;
+      loadTrack(currentTrackIndex);
+      if (isPlaying) play();
+    }
+
+    function loadPlaylist(newPlaylist) {
+      playlist = newPlaylist;
+      currentTrackIndex = -1;
+      if (playlist.length > 0) {
+        currentTrackIndex = 0;
+        loadTrack(currentTrackIndex);
+      }
+    }
+
+    function clearPlaylist() {
+      playlist = [];
+      currentTrackIndex = -1;
+      pause();
+      audioElement.src = "";
+      trackName.textContent = "No track selected";
+      trackArtist.textContent = "Select a track to begin";
+      trackArtwork.src = "/api/placeholder/48/48";
+      updateProgressPosition(0);
+    }
+
+    return {
+      initialize: init,
+      play,
+      pause,
+      toggle,
+      next,
+      previous,
+      playlist: {
+        load: loadPlaylist,
+        clear: clearPlaylist,
+      },
+    };
+  })();
+</script>
+
+<script>
+  AudioPlayer.initialize({
+    audioElementId: "audio-element",
+    progressBarId: "progress-bar",
+    progressHandleId: "progress-handle",
+    playPauseButtonId: "play-pause-button",
+    playIconId: "play-icon",
+    pauseIconId: "pause-icon",
+    volumeSliderId: "volume-slider",
+    volumeIconId: "volume-icon",
+    muteIconId: "mute-icon",
+    muteButtonId: "mute-button",
+    currentTimeDisplayId: "current-time",
+    durationDisplayId: "duration",
+    trackNameId: "track-name",
+    trackArtistId: "track-artist",
+    trackArtworkId: "track-artwork",
+    previousButtonId: "previous-button",
+    nextButtonId: "next-button",
+  });
+
+  AudioPlayer.playlist.load([
+    {
+      type: "song",
+      order: 1,
+      name: "Tip Your Bartender",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: {
+          ytmusic: { id: "OLAK5uy_nBHLNkviaEfN9C5kM9FlHvCMqYbmBypVw" },
+        },
+        year: null,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 181,
+      thumbnail: {
+        url: "https://i.ytimg.com/vi/sVEepmETMbs/sddefault.jpg?sqp=-oaymwEWCKoDEPABIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3lq1DC-xuy9wwCug60QrauKHt23AA",
+      },
+      sources: {
+        ytmusic: {
+          id: "sVEepmETMbs",
+          url: "https://www.youtube.com/watch?v=sVEepmETMbs",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 2,
+      name: "Mu Empire",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 225,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "Rl9ZbKuBveM",
+          url: "https://www.youtube.com/watch?v=Rl9ZbKuBveM",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 3,
+      name: "Cosmopolitan Blood Loss",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: {
+          ytmusic: { id: "OLAK5uy_nBHLNkviaEfN9C5kM9FlHvCMqYbmBypVw" },
+        },
+        year: null,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 191,
+      thumbnail: {
+        url: "https://i.ytimg.com/vi/eghgAnlhPGw/sddefault.jpg?sqp=-oaymwEWCKoDEPABIAQqCghqEJQEGHgg6AJIWg&rs=AMzJL3n1CJDJmAVtXwSHVSiBcJ6g24z95Q",
+      },
+      sources: {
+        ytmusic: {
+          id: "eghgAnlhPGw",
+          url: "https://www.youtube.com/watch?v=eghgAnlhPGw",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 4,
+      name: "Ape Dos Mil",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: {
+          ytmusic: { id: "OLAK5uy_nBHLNkviaEfN9C5kM9FlHvCMqYbmBypVw" },
+        },
+        year: null,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 232,
+      thumbnail: {
+        url: "https://i.ytimg.com/vi/SqWvkCTyCe0/hqdefault.jpg?sqp=-oaymwEWCMACELQBIAQqCghQEJADGFogjgJIWg&rs=AMzJL3lGtDBt70N7wZeKf87zWUV0zlPNxA",
+      },
+      sources: {
+        ytmusic: {
+          id: "SqWvkCTyCe0",
+          url: "https://www.youtube.com/watch?v=SqWvkCTyCe0",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 5,
+      name: "Pink Roses",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 177,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "WdtaC1vSpvQ",
+          url: "https://www.youtube.com/watch?v=WdtaC1vSpvQ",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 6,
+      name: "Must've Run All Day",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 294,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "Y3Wziwyq8QI",
+          url: "https://www.youtube.com/watch?v=Y3Wziwyq8QI",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 7,
+      name: "Stuck Pig",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 204,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "oqLhMN5FrQ0",
+          url: "https://www.youtube.com/watch?v=oqLhMN5FrQ0",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 8,
+      name: "Radio Cambodia",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 176,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "O8EYxfh4-n4",
+          url: "https://www.youtube.com/watch?v=O8EYxfh4-n4",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 9,
+      name: "The Gillette Cavalcade of Sports",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 357,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "KmuWm1j6_DI",
+          url: "https://www.youtube.com/watch?v=KmuWm1j6_DI",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 10,
+      name: "Trailer Park Jesus",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 271,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "abqURTPIiHc",
+          url: "https://www.youtube.com/watch?v=abqURTPIiHc",
+        },
+      },
+    },
+    {
+      type: "song",
+      order: 11,
+      name: "Two Tabs of Mescaline",
+      album: {
+        name: "Worship And Tribute (U.S. Version)",
+        sources: { ytmusic: { id: "MPREb_lPPuNtAwSwe" } },
+        year: 2002,
+        artists: [
+          {
+            name: "Glassjaw",
+            sources: { ytmusic: { id: "UC7u7YhIifuby0fhcU3f4AjQ" } },
+          },
+        ],
+      },
+      duration: 497,
+      thumbnail: {
+        url: "https://lh3.googleusercontent.com/ZWOoZwO9NfON5YEeDLkX6q8VTOG0dS-2my-vhsKiHPNkd_N3RY43B_VbMbMM3TXM0pzdCnzFgckI9AI_Mw=w544-h544-s-l90-rj",
+      },
+      sources: {
+        ytmusic: {
+          id: "RmiEPf38OTo",
+          url: "https://www.youtube.com/watch?v=RmiEPf38OTo",
+        },
+      },
+    },
+  ]);
+</script>

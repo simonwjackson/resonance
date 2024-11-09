@@ -120,7 +120,8 @@ def get_album_data($root):
     },
     sources: {
       ytmusic: {
-        id: .value.videoId
+        id: .value.videoId,
+        url: ("https://www.youtube.com/watch?v=" + .value.videoId)
       }
     }
   }

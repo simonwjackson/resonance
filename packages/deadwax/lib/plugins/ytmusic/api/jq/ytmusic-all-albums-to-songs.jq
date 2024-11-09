@@ -108,7 +108,8 @@ if type != "array" then [.] else . end
     },
     sources: {
       ytmusic: {
-        id: .value | get_video_id
+        id: .value | get_video_id,
+        url: ("https://www.youtube.com/watch?v=" + (.value | get_video_id))
       }
     },
     album: (

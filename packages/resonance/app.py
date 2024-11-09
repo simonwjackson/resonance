@@ -9,16 +9,20 @@ import os
 import subprocess
 from functools import wraps
 from typing import Any, Dict, List, Optional, Union
+from urllib.parse import urlparse
 
+import requests
 from flask import (
     Blueprint,
     Flask,
+    Response,
     abort,
     jsonify,
     redirect,
     render_template,
     request,
     send_file,
+    stream_with_context,
     url_for,
 )
 from flask_caching import Cache
@@ -196,7 +200,7 @@ def search():
             logger.error(f"Search error: {str(e)}")
 
     if request.headers.get("HX-Request"):
-        return render_template("partials/search_results.html", results=results)
+        return render_template("partials/search-results.html", results=results)
 
     return render_template("search.html", results=results, selected_item=selected_item)
 
@@ -218,6 +222,88 @@ def show_details(type: str, id: str):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         abort(500)
+
+
+@api.route("/get/", defaults={"url": ""})
+@api.route("/get/<path:url>")
+def get_url(url):
+    """
+    Proxy endpoint that handles both YouTube audio extraction and general URL proxying.
+    Takes the entire URL literally after /api/get/
+    """
+    try:
+        # Get the full path after /api/get/
+        full_path = request.full_path
+        url = full_path[full_path.index("/get/") + 5 :]
+
+        # Remove query string marker from request.full_path if it exists
+        if url.endswith("?"):
+            url = url[:-1]
+
+        if not url:
+            abort(400, description="No URL provided")
+
+        # Check if it's a YouTube URL
+        is_youtube = any(
+            host in url
+            for host in [
+                "music.youtube.com",
+                "youtube.com",
+                "youtu.be",
+                "www.youtube.com",
+            ]
+        )
+
+        if is_youtube:
+            try:
+                # First get the best audio format URL
+                cmd = [
+                    "yt-dlp",
+                    "-f",
+                    "bestaudio",
+                    "-g",  # Print URL only
+                    "--no-warnings",
+                    url,
+                ]
+
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                direct_url = result.stdout.strip()
+
+                if not direct_url:
+                    abort(500, description="Could not extract audio URL")
+
+                # Make request to the direct URL
+                r = requests.get(direct_url, stream=True)
+
+                # Get content type from response headers or default to audio/mpeg
+                content_type = r.headers.get("content-type", "audio/mpeg")
+
+            except subprocess.CalledProcessError as e:
+                logger.error(f"yt-dlp error: {e.stderr}")
+                abort(500, description="Failed to process YouTube URL")
+
+        else:
+            # For non-YouTube URLs, make a direct request
+            r = requests.get(url, stream=True)
+
+            if r.status_code != 200:
+                abort(r.status_code, description="Failed to fetch URL")
+
+            content_type = r.headers.get("content-type", "application/octet-stream")
+
+        # Create streaming response
+        return Response(
+            stream_with_context(r.iter_content(chunk_size=8192)),
+            content_type=content_type,
+            headers={"Content-Disposition": f'inline; filename="download"'},
+        )
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error: {str(e)}")
+        abort(500, description="Failed to fetch URL")
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        abort(500, description="Internal server error")
 
 
 @app.errorhandler(400)

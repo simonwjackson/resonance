@@ -153,7 +153,8 @@ def parse_song($item):
       },
       sources: {
         ytmusic: {
-          id: .playlistItemData.videoId
+          id: .playlistItemData.videoId,
+          url: ("https://www.youtube.com/watch?v=" + .playlistItemData.videoId)
         }
       }
     };

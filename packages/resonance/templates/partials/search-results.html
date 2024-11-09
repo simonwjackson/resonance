@@ -43,7 +43,11 @@
       <h2 class="text-lg font-semibold mb-4 text-primary">Songs</h2>
       <div class="space-y-2">
         {% for song in songs %}
-          <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+          <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 cursor-pointer"
+               onclick="playSong('{{ song.sources.ytmusic.id }}')"
+               hx-trigger="click"
+               hx-get="/api/show/song/{{ song.sources.ytmusic.id }}"
+               hx-swap="none">
             <div class="flex items-center p-4">
               <img src="{{ song.thumbnail.url }}"
                    alt="{{ song.name }}"
@@ -56,7 +60,8 @@
                        hx-get="/artist/{{ artist.sources.ytmusic.id }}"
                        hx-target="#content"
                        hx-push-url="true"
-                       class="hover:text-accent transition-colors duration-200">
+                       class="hover:text-accent transition-colors duration-200"
+                       onclick="event.stopPropagation()">
                       {{ artist.name }}
                     </a>
                     {%- if not loop.last %}, {% endif %}
@@ -67,7 +72,8 @@
                        hx-get="/album/{{ song.album.sources.ytmusic.id }}"
                        hx-target="#content"
                        hx-push-url="true"
-                       class="hover:text-accent transition-colors duration-200">
+                       class="hover:text-accent transition-colors duration-200"
+                       onclick="event.stopPropagation()">
                       {{ song.album.name }}
                     </a>
                   {% endif %}
@@ -156,3 +162,17 @@
     </div>
   {% endif %}
 </div>
+
+<script>
+  function playSong(songId) {
+    htmx.on("htmx:afterRequest", function(evt) {
+      if (evt.detail.pathInfo.requestPath === `/api/show/song/${songId}`) {
+        const songData = JSON.parse(evt.detail.xhr.response);
+        
+        musicPWA.loadTrack(songData).play();
+        htmx.off("htmx:afterRequest", this);
+      }
+    });
+  }
+</script>
+

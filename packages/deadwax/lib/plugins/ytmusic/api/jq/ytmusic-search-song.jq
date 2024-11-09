@@ -112,7 +112,8 @@ get_contents
     name: extract_song_data("name"),
     sources: {
       ytmusic: {
-        id: extract_song_data("id")
+        id: extract_song_data("id"),
+        url: ("https://www.youtube.com/watch?v=" + extract_song_data("id"))
       }
     }
   }

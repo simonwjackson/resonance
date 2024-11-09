@@ -83,7 +83,7 @@
         <!-- Results Container -->
         <div id="search-results" class="divide-y divide-secondary">
             {% if results %}
-                {% include "partials/search_results.html" %}
+                {% include "partials/search-results.html" %}
             {% elif request.args.get('q') %}
                 <div class="text-center py-8">
                     <p class="text-muted">No results found for "{{ request.args.get('q') }}"</p>
