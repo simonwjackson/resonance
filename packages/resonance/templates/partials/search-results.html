@@ -44,9 +44,8 @@
       <div class="space-y-2">
         {% for song in songs %}
           <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 cursor-pointer"
-               onclick="playSong('{{ song.sources.ytmusic.id }}')"
+               onclick="handleSongClick('{{ song.sources.ytmusic.id }}')"
                hx-trigger="click"
-               hx-get="/api/show/song/{{ song.sources.ytmusic.id }}"
                hx-swap="none">
             <div class="flex items-center p-4">
               <img src="{{ song.thumbnail.url }}"
@@ -94,15 +93,28 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for album in albums %}
           <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
-            <a href="/album/{{ album.sources.ytmusic.id }}"
-               hx-get="/album/{{ album.sources.ytmusic.id }}"
-               hx-target="#content"
-               hx-push-url="true"
-               class="block">
-              <img src="{{ album.thumbnail.url }}"
-                   alt="{{ album.name }}"
-                   class="w-full aspect-square object-cover rounded-t-lg" />
-            </a>
+            <!-- Album image container with relative positioning -->
+            <div class="relative group">
+              <a href="/album/{{ album.sources.ytmusic.id }}"
+                 hx-get="/album/{{ album.sources.ytmusic.id }}"
+                 hx-target="#content"
+                 hx-push-url="true"
+                 class="block">
+                <img src="{{ album.thumbnail.url }}"
+                     alt="{{ album.name }}"
+                     class="w-full aspect-square object-cover rounded-t-lg" />
+              </a>
+              <!-- Play button overlay -->
+              <button onclick="handleAlbumPlay('{{ album.sources.ytmusic.id }}', event)"
+                      class="absolute bottom-2 right-2 bg-accent hover:bg-accent-light text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            </div>
             <div class="p-4">
               <h3 class="font-medium text-primary">
                 <a href="/album/{{ album.sources.ytmusic.id }}"
@@ -127,6 +139,7 @@
               </p>
               <p class="text-sm text-muted mt-1">{{ album.year }}</p>
             </div>
+
           </div>
         {% endfor %}
       </div>
@@ -164,15 +177,62 @@
 </div>
 
 <script>
-  function playSong(songId) {
-    htmx.on("htmx:afterRequest", function(evt) {
-      if (evt.detail.pathInfo.requestPath === `/api/show/song/${songId}`) {
-        const songData = JSON.parse(evt.detail.xhr.response);
-        
-        musicPWA.loadTrack(songData).play();
-        htmx.off("htmx:afterRequest", this);
-      }
-    });
-  }
+function handleSongClick(songId) {
+  fetch(`/api/show/song/${songId}`, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(songData => {
+    const playlist = [songData];
+    AudioPlayer.playlist.load(playlist);
+    AudioPlayer.play();
+  });
+}
 </script>
 
+<script>
+function handleAlbumPlay(albumId, event) {
+  // Prevent navigation to album page
+  event.preventDefault();
+  event.stopPropagation();
+
+  // Show loading state
+  const button = event.currentTarget;
+  const originalContent = button.innerHTML;
+  button.innerHTML = `
+    <svg class="w-6 h-6 animate-spin" viewBox="0 0 24 24" fill="none">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  `;
+
+  // Fetch album songs
+  fetch(`/api/show/song/${albumId}`, {
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(playlist => {
+    AudioPlayer.playlist.load(playlist);
+    AudioPlayer.play();
+  })
+  .catch(error => {
+    console.error('Error loading album:', error);
+    // Show error state briefly
+    button.innerHTML = `
+      <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+    `;
+  })
+  .finally(() => {
+    // Reset button state after a brief delay
+    setTimeout(() => {
+      button.innerHTML = originalContent;
+    }, 1000);
+  });
+}
+</script>

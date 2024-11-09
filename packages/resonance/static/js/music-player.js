@@ -109,7 +109,7 @@ const musicPWA = (function() {
   function handleTrackChange() {
     const currentTrack = state.playlist[state.currentIndex];
     if (currentTrack.url) {
-      state.audioElement.src = currentTrack.url;
+      state.audioElement.src = `//localhost:5000/api/get/${currentTrack.url}`;
       updateMediaSessionMetadata();
 
       if (state.callbacks.onTrackChange) {
