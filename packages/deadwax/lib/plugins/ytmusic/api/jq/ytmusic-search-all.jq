@@ -21,10 +21,14 @@ def extract_artists:
       )
     | {
         name: .text,
-        id:
-          .navigationEndpoint
-          .browseEndpoint
-          .browseId
+        sources: {
+          ytmusic: {
+            id:
+              .navigationEndpoint
+              .browseEndpoint
+              .browseId
+          }
+        }
       }
   ]
   | unique;
@@ -100,7 +104,7 @@ def parse_song($item):
   $item
   | {
       type: "song",
-      title:
+      name:
         .flexColumns[0]
         .musicResponsiveListItemFlexColumnRenderer
         .text
@@ -121,22 +125,26 @@ def parse_song($item):
             )
           .text
         ),
-        id: (
-          .flexColumns[1]
-          .musicResponsiveListItemFlexColumnRenderer
-          .text
-          .runs[]
-          | select(
-              .navigationEndpoint?
-              .browseEndpoint?
-              .browseEndpointContextSupportedConfigs?
-              .browseEndpointContextMusicConfig?
-              .pageType == "MUSIC_PAGE_TYPE_ALBUM"
-            )
-          .navigationEndpoint
-          .browseEndpoint
-          .browseId
-        ),
+        sources: {
+          ytmusic: {
+            id: (
+              .flexColumns[1]
+              .musicResponsiveListItemFlexColumnRenderer
+              .text
+              .runs[]
+              | select(
+                  .navigationEndpoint?
+                  .browseEndpoint?
+                  .browseEndpointContextSupportedConfigs?
+                  .browseEndpointContextMusicConfig?
+                  .pageType == "MUSIC_PAGE_TYPE_ALBUM"
+                )
+              .navigationEndpoint
+              .browseEndpoint
+              .browseId
+            ),
+          }
+        },
         artists: extract_artists
       },
       duration: parse_duration,

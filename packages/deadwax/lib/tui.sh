@@ -118,7 +118,7 @@ choose() {
     ;;
   "song")
     preview_text+="$([[ "$DEADWAX_TARGET_OUTPUT" == "song" ]] && echo "get song" || echo "view artist")"
-    jq_filter='"\(.sources[].id)\t\(.order) \(.title)"'
+    jq_filter='"\(.sources[].id)\t\(.order) \(.name)"'
     if [[ "$DEADWAX_TARGET_OUTPUT" == "song" ]]; then
       action_command="echo {+1} | xargs -I % bash -c 'get song \"%\"'"
     else

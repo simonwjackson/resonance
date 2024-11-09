@@ -87,15 +87,20 @@ def get_album_data:
   getFlexColumnText("MUSIC_PAGE_TYPE_ALBUM")[0]
   | {
       name: .text,
-      id:
-        .navigationEndpoint
-        .browseEndpoint
-        .browseId
+      sources: {
+        ytmusic: {
+          id:
+            .navigationEndpoint
+            .browseEndpoint
+            .browseId
+        }
+      }
     };
 
 if type != "array" then [.] else . end
 | to_entries
 | map({
+    type: "song",
     name: .value | get_name,
     duration: .value | get_duration,
     thumbnail: {

@@ -17,9 +17,7 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for artist in artists %}
           <a href="/artist/{{ artist.sources.ytmusic.id }}"
-             class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4"
-             hx-get="/artist/{{ artist.sources.ytmusic.id }}"
-             hx-push-url="true">
+             class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4">
             {% if artist.thumbnail %}
               <img src="{{ artist.thumbnail.url }}"
                    alt="{{ artist.name }}"
@@ -44,22 +42,18 @@
           <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
             <div class="flex items-center p-4">
               <img src="{{ song.thumbnail.url }}"
-                   alt="{{ song.title }}"
+                   alt="{{ song.name }}"
                    class="w-12 h-12 rounded object-cover" />
               <div class="ml-4 flex-grow">
-                <h3 class="font-medium text-primary">{{ song.title }}</h3>
+                <h3 class="font-medium text-primary">{{ song.name }}</h3>
                 <p class="text-sm text-secondary">
                   {% for artist in song.artists %}
                     <a href="/artist/{{ artist.sources.ytmusic.id }}"
-                       class="hover:text-accent transition-colors duration-200"
-                       hx-get="/artist/{{ artist.sources.ytmusic.id }}"
-                       hx-push-url="true">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
+                       class="hover:text-accent transition-colors duration-200">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
                   {% endfor %}
                   {% if song.album %}
                     • <a href="/album/{{ song.album.sources.ytmusic.id }}"
-                         class="hover:text-accent transition-colors duration-200"
-                         hx-get="/album/{{ song.album.sources.ytmusic.id }}"
-                         hx-push-url="true">{{ song.album.name }}</a>
+                         class="hover:text-accent transition-colors duration-200">{{ song.album.name }}</a>
                   {% endif %}
                 </p>
               </div>
@@ -78,9 +72,7 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for album in albums %}
           <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
-            <a href="/album/{{ album.sources.ytmusic.id }}"
-               hx-get="/album/{{ album.sources.ytmusic.id }}"
-               hx-push-url="true">
+            <a href="/album/{{ album.sources.ytmusic.id }}" class="block">
               <img src="{{ album.thumbnail.url }}"
                    alt="{{ album.name }}"
                    class="w-full aspect-square object-cover rounded-t-lg" />
@@ -88,16 +80,12 @@
             <div class="p-4">
               <h3 class="font-medium text-primary">
                 <a href="/album/{{ album.sources.ytmusic.id }}"
-                   class="hover:text-accent transition-colors duration-200"
-                   hx-get="/album/{{ album.sources.ytmusic.id }}"
-                   hx-push-url="true">{{ album.name }}</a>
+                   class="hover:text-accent transition-colors duration-200">{{ album.name }}</a>
               </h3>
               <p class="text-sm text-secondary">
                 {% for artist in album.artists %}
                   <a href="/artist/{{ artist.sources.ytmusic.id }}"
-                     class="hover:text-accent transition-colors duration-200"
-                     hx-get="/artist/{{ artist.sources.ytmusic.id }}"
-                     hx-push-url="true">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
+                     class="hover:text-accent transition-colors duration-200">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
                 {% endfor %}
               </p>
               <p class="text-sm text-muted mt-1">{{ album.year }}</p>

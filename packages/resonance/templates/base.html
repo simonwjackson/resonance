@@ -1,145 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>
-            {% block title %}Music Library{% endblock %}
-        </title>
-        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/themes.css') }}" />
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-          // Configure Tailwind to work with our theme system
-          tailwind.config = {
-            darkMode: ['class', '[data-theme="dark"]'],
-            theme: {
-              extend: {
-                backgroundColor: {
-                  primary: 'var(--background-primary)',
-                  secondary: 'var(--background-secondary)',
-                },
-                textColor: {
-                  primary: 'var(--text-primary)',
-                  secondary: 'var(--text-secondary)',
-                  muted: 'var(--text-muted)',
-                },
-              },
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}Music Library{% endblock %}
+    </title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/themes.css') }}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Configure Tailwind to work with our theme system
+      tailwind.config = {
+        darkMode: ['class', '[data-theme="dark"]'],
+        theme: {
+          extend: {
+            backgroundColor: {
+              primary: 'var(--background-primary)',
+              secondary: 'var(--background-secondary)',
             },
+            textColor: {
+              primary: 'var(--text-primary)',
+              secondary: 'var(--text-secondary)',
+              muted: 'var(--text-muted)',
+            },
+          },
+        },
+      }
+
+      // Theme management
+      const ThemeManager = {
+        themes: ["light", "dark", "night"],
+
+        init() {
+          // Get theme from localStorage or system preference
+          const savedTheme = localStorage.getItem("theme");
+          if (savedTheme && this.themes.includes(savedTheme)) {
+            this.setTheme(savedTheme);
+          } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            this.setTheme("dark");
+          } else {
+            this.setTheme("light");
           }
 
-          // Theme management
-          const ThemeManager = {
-            themes: ["light", "dark", "night"],
-
-            init() {
-              // Get theme from localStorage or system preference
-              const savedTheme = localStorage.getItem("theme");
-              if (savedTheme && this.themes.includes(savedTheme)) {
-                this.setTheme(savedTheme);
-              } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                this.setTheme("dark");
-              } else {
-                this.setTheme("light");
+          // Watch for system theme changes
+          window
+            .matchMedia("(prefers-color-scheme: dark)")
+            .addEventListener("change", (e) => {
+              if (!localStorage.getItem("theme")) {
+                this.setTheme(e.matches ? "dark" : "light");
               }
+            });
+        },
 
-              // Watch for system theme changes
-              window
-                .matchMedia("(prefers-color-scheme: dark)")
-                .addEventListener("change", (e) => {
-                  if (!localStorage.getItem("theme")) {
-                    this.setTheme(e.matches ? "dark" : "light");
-                  }
-                });
-            },
+        getCurrentTheme() {
+          return document.documentElement.getAttribute("data-theme") || "light";
+        },
 
-            getCurrentTheme() {
-              return document.documentElement.getAttribute("data-theme") || "light";
-            },
+        setTheme(theme) {
+          // Set theme attribute
+          document.documentElement.setAttribute("data-theme", theme);
+          localStorage.setItem("theme", theme);
 
-            setTheme(theme) {
-              // Set theme attribute
-              document.documentElement.setAttribute("data-theme", theme);
-              localStorage.setItem("theme", theme);
+          // Update icons visibility
+          this.themes.forEach(t => {
+            const icon = document.querySelector(`[data-theme-icon="${t}"]`);
+            if (icon) {
+              icon.style.display = t === theme ? "block" : "none";
+            }
+          });
+        },
 
-              // Update icons visibility
-              this.themes.forEach(t => {
-                const icon = document.querySelector(`[data-theme-icon="${t}"]`);
-                if (icon) {
-                  icon.style.display = t === theme ? "block" : "none";
-                }
-              });
-            },
+        cycleTheme() {
+          const currentIndex = this.themes.indexOf(this.getCurrentTheme());
+          const nextIndex = (currentIndex + 1) % this.themes.length;
+          this.setTheme(this.themes[nextIndex]);
+        },
+      };
 
-            cycleTheme() {
-              const currentIndex = this.themes.indexOf(this.getCurrentTheme());
-              const nextIndex = (currentIndex + 1) % this.themes.length;
-              this.setTheme(this.themes[nextIndex]);
-            },
-          };
-
-          // Initialize theme on page load
-          document.addEventListener("DOMContentLoaded", () => ThemeManager.init());
-        </script>
-    </head>
-    <body class="min-h-screen bg-primary text-primary transition-colors duration-200">
-        <nav class="bg-secondary shadow-lg mb-8">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="flex justify-between h-16">
-                    <div class="flex">
-                        <a href="/" class="flex items-center">
-                            <span class="text-xl font-bold text-primary">Music Library</span>
-                        </a>
-                    </div>
-                    <div class="flex items-center">
-                        <button onclick="ThemeManager.cycleTheme()"
-                                class="p-2 rounded-lg hover:bg-opacity-10 hover:bg-black transition-colors duration-200"
-                                aria-label="Toggle theme">
-                            <!-- Sun icon for light mode -->
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 data-theme-icon="light"
-                                 class="h-6 w-6"
-                                 style="display: none"
-                                 fill="none"
-                                 viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                            <!-- Moon icon for night mode -->
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 data-theme-icon="night"
-                                 class="h-6 w-6"
-                                 style="display: none"
-                                 fill="none"
-                                 viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                            </svg>
-                            <!-- Sunset icon for dark mode -->
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 data-theme-icon="dark"
-                                 class="h-6 w-6"
-                                 style="display: none"
-                                 fill="none"
-                                 viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 18H7a5 5 0 0 1 10 0Z" />
-                                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12" y1="7" x2="12" y2="9" />
-                                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="4.22" y1="10.22" x2="5.64" y2="11.64" />
-                                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="18.36" y1="11.64" x2="19.78" y2="10.22" />
-                                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="21" y1="18" x2="23" y2="18" />
-                                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="1" y1="18" x2="3" y2="18" />
-                                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="3" y1="22" x2="21" y2="22" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </nav>
-        <main class="max-w-7xl mx-auto px-4">
-            {% block content %}{% endblock %}
-        </main>
-    </body>
+      // Initialize theme on page load
+      document.addEventListener("DOMContentLoaded", () => ThemeManager.init());
+    </script>
+  </head>
+  <body class="min-h-screen bg-primary text-primary transition-colors duration-200">
+    <nav class="bg-secondary shadow-lg mb-8">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between h-16">
+          <div class="flex">
+            <a href="/" class="flex items-center">
+              <span class="text-xl font-bold text-primary">Music Library</span>
+            </a>
+          </div>
+          <div class="flex items-center">
+            <button onclick="ThemeManager.cycleTheme()"
+                    class="p-2 rounded-lg hover:bg-opacity-10 hover:bg-black transition-colors duration-200"
+                    aria-label="Toggle theme">
+              <!-- Sun icon for light mode -->
+              <svg xmlns="http://www.w3.org/2000/svg"
+                   data-theme-icon="light"
+                   class="h-6 w-6"
+                   style="display: none"
+                   fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <!-- Moon icon for night mode -->
+              <svg xmlns="http://www.w3.org/2000/svg"
+                   data-theme-icon="night"
+                   class="h-6 w-6"
+                   style="display: none"
+                   fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+              <!-- Sunset icon for dark mode -->
+              <svg xmlns="http://www.w3.org/2000/svg"
+                   data-theme-icon="dark"
+                   class="h-6 w-6"
+                   style="display: none"
+                   fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 18H7a5 5 0 0 1 10 0Z" />
+                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="12" y1="7" x2="12" y2="9" />
+                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="4.22" y1="10.22" x2="5.64" y2="11.64" />
+                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="18.36" y1="11.64" x2="19.78" y2="10.22" />
+                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="21" y1="18" x2="23" y2="18" />
+                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="1" y1="18" x2="3" y2="18" />
+                <line stroke-linecap="round" stroke-linejoin="round" stroke-width="2" x1="3" y1="22" x2="21" y2="22" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <main class="max-w-7xl mx-auto px-4">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
 </html>
 

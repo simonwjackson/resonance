@@ -13,8 +13,8 @@ const musicPWA = (function() {
 
   // Private functions
   function validateTrack(track) {
-    if (!track.title || !track.album || !track.sources) {
-      throw new Error('Track must contain title, album, and sources');
+    if (!track.name || !track.album || !track.sources) {
+      throw new Error('Track must contain name, album, and sources');
     }
 
     // Ensure track has required nested properties
@@ -25,7 +25,7 @@ const musicPWA = (function() {
     return {
       id: track.sources.ytmusic?.id || crypto.randomUUID(),
       order: track.order || 0,
-      title: track.title,
+      name: track.name,
       album: {
         name: track.album.name,
         year: track.album.year,
@@ -96,7 +96,7 @@ const musicPWA = (function() {
     if ('mediaSession' in navigator && state.mediaSessionEnabled) {
       const currentTrack = state.playlist[state.currentIndex];
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: currentTrack.title,
+        title: currentTrack.name,
         artist: currentTrack.album.artists.map(artist => artist.name).join(', '),
         album: currentTrack.album.name,
         artwork: currentTrack.thumbnail ? [

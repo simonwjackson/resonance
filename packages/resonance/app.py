@@ -200,33 +200,16 @@ def search():
     return render_template("search.html", results=results, selected_item=selected_item)
 
 
-@web.route("/artist/<id>")
-def show_artist(id):
-    """Show artist details and albums"""
-    try:
-        # Get albums for this artist
-        result = run_deadwax_command("show/album", id)
-
-        if isinstance(result, dict):
-            result = [result]
-
-        if request.headers.get("HX-Request"):
-            return render_template("artist.html", item=result)
-
-        return render_template("artist.html", item=result)
-    except Exception as e:
-        logger.error(f"Error processing request: {str(e)}")
-        abort(500)
-
-
 @web.route("/<type>/<id>")
 @validate_resource_type
 def show_details(type: str, id: str):
     """Show detailed view of a resource"""
     try:
         result = run_deadwax_command(f"show/{type}", id)
+
         if request.headers.get("HX-Request"):
             return render_template(f"partials/{type}.html", item=result)
+
         return render_template(f"partials/{type}.html", item=result)
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")

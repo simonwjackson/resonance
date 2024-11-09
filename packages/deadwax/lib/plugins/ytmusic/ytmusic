@@ -222,9 +222,21 @@ create_artist_list() {
   "' <<<"$obj")"
 
   if [ "$recommend" == "false" ] && [ "$type" == "artist" ]; then
-    # TODO: Just need to grab the only artist info here. maybe scrape the artist page? or just call a shuffle api
-    gum log --level error "Soon.."
-    exit 0
+    # HACK: Were getting all of the songs then transforming them into albums then grouping by artist. might be better to just call the all albums api.
+    get_all_artist_songs "$id" |
+      all_to_olak |
+      jq \
+        --slurp \
+        --compact-output \
+        --from-file "${YTMUSIC_PLUGIN_BASE_DIR}/api/jq/deadwax-songs-to-albums.jq" |
+      jq \
+        --compact-output \
+        --from-file "${YTMUSIC_PLUGIN_BASE_DIR}/api/jq/ytmusic-albums-to-artists.jq" |
+      jq \
+        --compact-output \
+        'select(.sources.ytmusic.id == "'"$id"'")'
+
+    return
   elif [ "$recommend" == "false" ] && [ "$type" == "song" ]; then
     extraJson="$(
       jq \

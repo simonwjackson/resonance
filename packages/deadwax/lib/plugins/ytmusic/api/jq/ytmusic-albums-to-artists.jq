@@ -1,31 +1,32 @@
-if type != "array" then [.] else . end
+[inputs]
 | map(
-    .artists[] as $artist
-    | {
-        name: $artist.name,
-        sources: {
-          ytmusic: {
-            id: $artist.id
-          }
-        },
-        albums: [{
-            name: .name,
-            year: .year,
-            thumbnail: .thumbnail,
-            songs: .songs
-              | map({
-                  title,
-                  duration,
-                  sources
-              })
-        }]
-    }
+  if type != "array" then [.] else . end
+  | map(
+      .artists[] as $artist
+      | {
+          type: "artist",
+          name: $artist.name,
+          sources: $artist.sources,
+          albums: [{
+              name: .name,
+              year: .year,
+              thumbnail: .thumbnail,
+              sources: .sources,
+              songs: .songs
+                | map({
+                    name,
+                    duration,
+                    sources
+                })
+          }]
+      }
+  )
+  | .[]
 )
-| group_by(.name)
-| map(
-    .[0] * {
-        albums: map(.albums[])
-    }
-)
-| sort_by(.name)
+| group_by(.sources.ytmusic.id)
+| map({
+    artist: .[0].name,
+    sources: .[0].sources,
+    albums: [.[].albums[]]
+  })
 | .[]

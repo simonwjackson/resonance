@@ -110,8 +110,9 @@ def get_album_data($root):
 | .playlistPanelVideoRenderer]
 | to_entries[]
 | {
+    type: "song",
     order: (.key + 1),
-    title: .value.title.runs[0].text,
+    name: .value.title.runs[0].text,
     album: .value | get_album_data($root),
     duration: .value.lengthText.runs[0].text | duration_to_seconds,
     thumbnail: {

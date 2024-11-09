@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ item.artist }} - Artist Details{% endblock %}
+
+{% block content %}
+<div class="bg-secondary rounded-lg shadow-lg p-6">
+  <!-- Artist Header -->
+  <div class="flex flex-col md:flex-row gap-6 mb-8">
+
+    <!-- Artist Info -->
+    <div class="flex-grow">
+      <h1 class="text-4xl font-bold mb-4 text-primary">{{ item.artist }}</h1>
+      <div class="text-lg text-secondary mb-4">
+        {{ item.albums | length }} album{% if item.albums | length != 1 %}s{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Albums Grid -->
+  <div class="mt-8">
+    <h2 class="text-2xl font-semibold mb-6 text-primary">Discography</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {% for album in item.albums %}
+        <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+          <a href="/album/{{ album.sources.ytmusic.id }}" class="block">
+            <img src="{{ album.thumbnail.url | replace('w120-h120', 'w500-h500') }}"
+                 alt="{{ album.name }}"
+                 class="w-full aspect-square object-cover rounded-t-lg" />
+          </a>
+          <div class="p-4">
+            <h3 class="font-medium text-primary">
+              <a href="/album/{{ album.sources.ytmusic.id }}"
+                 class="hover:text-accent transition-colors duration-200">{{ album.name }}</a>
+            </h3>
+            {% if item.year %}
+                <p class="text-sm text-muted mt-1">{{ album.year  }}</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
