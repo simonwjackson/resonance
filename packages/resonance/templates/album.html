@@ -1,9 +1,0 @@
-{% extends "base.html" %} {% block title %}{{ item.name }} - Album Details{%
-endblock %} {% block content %}
-<div class="bg-secondary rounded-lg shadow-lg p-6">
-  {# Album Header Section #} {% include "partials/album/header.html" %} {# Track
-  List Section #} {% if item.songs %} {% include "partials/album/tracklist.html"
-  %} {% endif %} {# Related Albums Section #} {% if item.related_albums %} {%
-  include "partials/album/related.html" %} {% endif %}
-</div>
-{% endblock %}

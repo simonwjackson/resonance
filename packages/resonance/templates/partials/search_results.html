@@ -1,95 +1,131 @@
-{% macro duration_format(seconds) %} {% set minutes = (seconds / 60) | int %} {%
-set remaining_seconds = (seconds % 60) | int %} {{ minutes }}:{{ '%02d' %
-remaining_seconds }} {% endmacro %}
+{% macro duration_format(seconds) %}
+  {% set minutes = (seconds / 60) | int %}
+  {% set remaining_seconds = (seconds % 60) | int %}
+  {{ minutes }}:{{ '%02d' % remaining_seconds }}
+{% endmacro %}
 
 <div class="space-y-8">
-  {# Group results by type #} {% set songs = results | selectattr("type",
-  "equalto", "song") | list %} {% set albums = results | selectattr("type",
-  "equalto", "album") | list %} {% set playlists = results | selectattr("type",
-  "equalto", "playlist") | list %} {# Songs Section #} {% if songs %}
-  <div>
-    <h2 class="text-lg font-semibold mb-4 text-primary">Songs</h2>
-    <div class="space-y-2">
-      {% for song in songs %}
-      <div
-        class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 cursor-pointer"
-        hx-get="/song/{{ song.sources.ytmusic.id }}"
-        hx-trigger="click"
-        hx-target="#details-view"
-        hx-push-url="true"
-      >
-        <div class="flex items-center p-4">
-          <img
-            src="{{ song.thumbnail.url }}"
-            alt="{{ song.title }}"
-            class="w-12 h-12 rounded object-cover"
-          />
-          <div class="ml-4 flex-grow">
-            <h3 class="font-medium text-primary">{{ song.title }}</h3>
-            <p class="text-sm text-secondary">
-              {{ song.album.artists | map(attribute='name') | join(', ') }} • {{
-              song.album.name }}
-            </p>
+  {% set songs = results | selectattr("type", "equalto", "song") | list %}
+  {% set albums = results | selectattr("type", "equalto", "album") | list %}
+  {% set playlists = results | selectattr("type", "equalto", "playlist") | list %}
+  {% set artists = results | selectattr("type", "equalto", "artist") | list %}
+
+  {# Artists Section #}
+  {% if artists %}
+    <div>
+      <h2 class="text-lg font-semibold mb-4 text-primary">Artists</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for artist in artists %}
+          <a href="/artist/{{ artist.sources.ytmusic.id }}"
+             class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4"
+             hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+             hx-push-url="true">
+            {% if artist.thumbnail %}
+              <img src="{{ artist.thumbnail.url }}"
+                   alt="{{ artist.name }}"
+                   class="w-full aspect-square object-cover rounded-lg mb-3" />
+            {% endif %}
+            <h3 class="font-medium text-primary">{{ artist.name }}</h3>
+            {% if artist.genres %}
+              <p class="text-sm text-muted mt-1">{{ artist.genres[0] }}</p>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {# Songs Section #}
+  {% if songs %}
+    <div>
+      <h2 class="text-lg font-semibold mb-4 text-primary">Songs</h2>
+      <div class="space-y-2">
+        {% for song in songs %}
+          <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+            <div class="flex items-center p-4">
+              <img src="{{ song.thumbnail.url }}"
+                   alt="{{ song.title }}"
+                   class="w-12 h-12 rounded object-cover" />
+              <div class="ml-4 flex-grow">
+                <h3 class="font-medium text-primary">{{ song.title }}</h3>
+                <p class="text-sm text-secondary">
+                  {% for artist in song.artists %}
+                    <a href="/artist/{{ artist.sources.ytmusic.id }}"
+                       class="hover:text-accent transition-colors duration-200"
+                       hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+                       hx-push-url="true">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
+                  {% endfor %}
+                  {% if song.album %}
+                    • <a href="/album/{{ song.album.sources.ytmusic.id }}"
+                         class="hover:text-accent transition-colors duration-200"
+                         hx-get="/album/{{ song.album.sources.ytmusic.id }}"
+                         hx-push-url="true">{{ song.album.name }}</a>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="text-sm text-muted">{{ duration_format(song.duration) }}</div>
+            </div>
           </div>
-          <div class="text-sm text-muted">
-            {{ duration_format(song.duration) }}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {# Albums Section #}
+  {% if albums %}
+    <div>
+      <h2 class="text-lg font-semibold mb-4 text-primary">Albums</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for album in albums %}
+          <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+            <a href="/album/{{ album.sources.ytmusic.id }}"
+               hx-get="/album/{{ album.sources.ytmusic.id }}"
+               hx-push-url="true">
+              <img src="{{ album.thumbnail.url }}"
+                   alt="{{ album.name }}"
+                   class="w-full aspect-square object-cover rounded-t-lg" />
+            </a>
+            <div class="p-4">
+              <h3 class="font-medium text-primary">
+                <a href="/album/{{ album.sources.ytmusic.id }}"
+                   class="hover:text-accent transition-colors duration-200"
+                   hx-get="/album/{{ album.sources.ytmusic.id }}"
+                   hx-push-url="true">{{ album.name }}</a>
+              </h3>
+              <p class="text-sm text-secondary">
+                {% for artist in album.artists %}
+                  <a href="/artist/{{ artist.sources.ytmusic.id }}"
+                     class="hover:text-accent transition-colors duration-200"
+                     hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+                     hx-push-url="true">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
+                {% endfor %}
+              </p>
+              <p class="text-sm text-muted mt-1">{{ album.year }}</p>
+            </div>
           </div>
-        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
-  </div>
-  {% endif %} {# Albums Section #} {% if albums %}
-  <div>
-    <h2 class="text-lg font-semibold mb-4 text-primary">Albums</h2>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {% for album in albums %}
-      <div
-        class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 cursor-pointer"
-        hx-get="/album/{{ album.sources.ytmusic.id }}"
-        hx-trigger="click"
-        hx-target="body"
-        hx-push-url="true"
-      >
-        <img
-          src="{{ album.thumbnail.url }}"
-          alt="{{ album.name }}"
-          class="w-full aspect-square object-cover rounded-t-lg"
-        />
-        <div class="p-4">
-          <h3 class="font-medium text-primary">{{ album.name }}</h3>
-          <p class="text-sm text-secondary">
-            {{ album.artists | map(attribute='name') | join(', ') }}
-          </p>
-          <p class="text-sm text-muted mt-1">{{ album.year }}</p>
-        </div>
+  {% endif %}
+
+  {# Playlists Section #}
+  {% if playlists %}
+    <div>
+      <h2 class="text-lg font-semibold mb-4 text-primary">Playlists</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {% for playlist in playlists %}
+          <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4">
+            <h3 class="font-medium text-primary">{{ playlist.name }}</h3>
+            <p class="text-sm text-muted mt-1">Playlist</p>
+          </div>
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
-  </div>
-  {% endif %} {# Playlists Section #} {% if playlists %}
-  <div>
-    <h2 class="text-lg font-semibold mb-4 text-primary">Playlists</h2>
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {% for playlist in playlists %}
-      <div
-        class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 cursor-pointer"
-        hx-get="/playlist/{{ playlist.sources.ytmusic.id }}"
-        hx-trigger="click"
-        hx-target="#details-view"
-        hx-push-url="true"
-      >
-        <div class="p-4">
-          <h3 class="font-medium text-primary">{{ playlist.name }}</h3>
-          <p class="text-sm text-muted mt-1">Playlist</p>
-        </div>
-      </div>
-      {% endfor %}
+  {% endif %}
+
+  {% if not songs and not albums and not playlists and not artists %}
+    <div class="text-center py-8">
+      <p class="text-muted">No results found</p>
     </div>
-  </div>
-  {% endif %} {% if not songs and not albums and not playlists %}
-  <div class="text-center py-8">
-    <p class="text-muted">No results found</p>
-  </div>
   {% endif %}
 </div>
