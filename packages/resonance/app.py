@@ -186,11 +186,12 @@ def search():
     if query:
         try:
             results = run_deadwax_command(f"search/{search_type}", query)
-            # Apply sorting if needed
+
             if sort == "name":
                 results.sort(key=lambda x: x.get("name", ""))
             elif sort == "date":
                 results.sort(key=lambda x: x.get("year", 0), reverse=True)
+
         except Exception as e:
             logger.error(f"Search error: {str(e)}")
 
@@ -207,10 +208,13 @@ def show_details(type: str, id: str):
     try:
         result = run_deadwax_command(f"show/{type}", id)
 
+        # For HTMX requests, only return the partial content
         if request.headers.get("HX-Request"):
-            return render_template(f"partials/{type}.html", item=result)
+            template = f"partials/{type}.html"
+            return render_template(template, item=result)
 
-        return render_template(f"partials/{type}.html", item=result)
+        # For full page requests, return the complete page
+        return render_template(f"{type}.html", item=result)
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         abort(500)

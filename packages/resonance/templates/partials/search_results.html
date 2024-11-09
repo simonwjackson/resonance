@@ -17,6 +17,9 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for artist in artists %}
           <a href="/artist/{{ artist.sources.ytmusic.id }}"
+             hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+             hx-target="#content"
+             hx-push-url="true"
              class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4">
             {% if artist.thumbnail %}
               <img src="{{ artist.thumbnail.url }}"
@@ -31,6 +34,7 @@
         {% endfor %}
       </div>
     </div>
+
   {% endif %}
 
   {# Songs Section #}
@@ -49,11 +53,23 @@
                 <p class="text-sm text-secondary">
                   {% for artist in song.artists %}
                     <a href="/artist/{{ artist.sources.ytmusic.id }}"
-                       class="hover:text-accent transition-colors duration-200">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
+                       hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+                       hx-target="#content"
+                       hx-push-url="true"
+                       class="hover:text-accent transition-colors duration-200">
+                      {{ artist.name }}
+                    </a>
+                    {%- if not loop.last %}, {% endif %}
                   {% endfor %}
                   {% if song.album %}
-                    • <a href="/album/{{ song.album.sources.ytmusic.id }}"
-                         class="hover:text-accent transition-colors duration-200">{{ song.album.name }}</a>
+                    •
+                    <a href="/album/{{ song.album.sources.ytmusic.id }}"
+                       hx-get="/album/{{ song.album.sources.ytmusic.id }}"
+                       hx-target="#content"
+                       hx-push-url="true"
+                       class="hover:text-accent transition-colors duration-200">
+                      {{ song.album.name }}
+                    </a>
                   {% endif %}
                 </p>
               </div>
@@ -72,7 +88,11 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for album in albums %}
           <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
-            <a href="/album/{{ album.sources.ytmusic.id }}" class="block">
+            <a href="/album/{{ album.sources.ytmusic.id }}"
+               hx-get="/album/{{ album.sources.ytmusic.id }}"
+               hx-target="#content"
+               hx-push-url="true"
+               class="block">
               <img src="{{ album.thumbnail.url }}"
                    alt="{{ album.name }}"
                    class="w-full aspect-square object-cover rounded-t-lg" />
@@ -80,12 +100,23 @@
             <div class="p-4">
               <h3 class="font-medium text-primary">
                 <a href="/album/{{ album.sources.ytmusic.id }}"
-                   class="hover:text-accent transition-colors duration-200">{{ album.name }}</a>
+                   hx-get="/album/{{ album.sources.ytmusic.id }}"
+                   hx-target="#content"
+                   hx-push-url="true"
+                   class="hover:text-accent transition-colors duration-200">
+                  {{ album.name }}
+                </a>
               </h3>
               <p class="text-sm text-secondary">
                 {% for artist in album.artists %}
                   <a href="/artist/{{ artist.sources.ytmusic.id }}"
-                     class="hover:text-accent transition-colors duration-200">{{ artist.name }}</a>{% if not loop.last %}, {% endif %}
+                     hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+                     hx-target="#content"
+                     hx-push-url="true"
+                     class="hover:text-accent transition-colors duration-200">
+                    {{ artist.name }}
+                  </a>
+                  {%- if not loop.last %}, {% endif %}
                 {% endfor %}
               </p>
               <p class="text-sm text-muted mt-1">{{ album.year }}</p>
@@ -103,8 +134,16 @@
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {% for playlist in playlists %}
           <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4">
-            <h3 class="font-medium text-primary">{{ playlist.name }}</h3>
-            <p class="text-sm text-muted mt-1">Playlist</p>
+            <a href="/playlist/{{ playlist.sources.ytmusic.id }}"
+               hx-get="/playlist/{{ playlist.sources.ytmusic.id }}"
+               hx-target="#content"
+               hx-push-url="true"
+               class="block">
+              <h3 class="font-medium text-primary hover:text-accent transition-colors duration-200">
+                {{ playlist.name }}
+              </h3>
+              <p class="text-sm text-muted mt-1">Playlist</p>
+            </a>
           </div>
         {% endfor %}
       </div>
