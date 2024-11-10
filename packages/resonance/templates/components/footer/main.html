@@ -1,0 +1,10 @@
+{# Component: Main Footer with Audio Player
+Description: Fixed footer containing the audio player
+Required context: None
+Events: Listens for audio-player-update events
+#}
+<footer class="fixed bottom-0 left-0 right-0 bg-secondary border-t border-secondary shadow-lg z-50" hx-preserve="true">
+  <div class="max-w-7xl mx-auto">
+    {% include "components/audio/player.html" %}
+  </div>
+</footer>

@@ -1,0 +1,33 @@
+{# Component: Main Navigation Header
+Description: Primary navigation component with theme toggle and branding
+Usage: Include in base template or layouts
+Required context: None
+Events: Dispatches theme-changed event when theme is toggled
+#}
+<nav class="bg-secondary shadow-lg" hx-preserve="true">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="flex justify-between h-16">
+      <!-- Left side - Branding -->
+      <div class="flex items-center">
+        <a href="/" class="flex items-center" hx-get="/" hx-push-url="true" hx-target="#content">
+          <span class="text-xl font-bold text-primary">Music Library</span>
+        </a>
+      </div>
+
+      <!-- Center - Navigation Links -->
+      <div class="hidden md:flex items-center space-x-4">
+        {% for item in nav_items %}
+        <a href="{{ item.url }}" class="text-primary hover:text-accent px-3 py-2 rounded-md text-sm font-medium"
+          hx-get="{{ item.url }}" hx-push-url="true" hx-target="#content">
+          {{ item.label }}
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- Right side - Theme Toggle -->
+      <div class="flex items-center">
+        {% include "components/nav/theme-toggle.html" %}
+      </div>
+    </div>
+  </div>
+</nav>
