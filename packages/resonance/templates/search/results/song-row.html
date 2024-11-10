@@ -1,0 +1,36 @@
+{% macro song_row(song) %}
+{% macro duration_format(seconds) %}
+{% set minutes = (seconds / 60) | int %}
+{% set remaining_seconds = (seconds % 60) | int %}
+{{ minutes }}:{{ '%02d' % remaining_seconds }}
+{% endmacro %}
+
+<div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 cursor-pointer"
+  onclick="handleSongClick('{{ song.sources.ytmusic.id }}')" hx-trigger="click" hx-swap="none">
+  <div class="flex items-center p-4">
+    <img src="{{ song.thumbnail.url }}" alt="{{ song.name }}" class="w-12 h-12 rounded object-cover" />
+    <div class="ml-4 flex-grow">
+      <h3 class="font-medium text-primary">{{ song.name }}</h3>
+      <p class="text-sm text-secondary">
+        {% for artist in song.artists %}
+        <a href="/artist/{{ artist.sources.ytmusic.id }}" hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+          hx-target="#content" hx-push-url="true" class="hover:text-accent transition-colors duration-200"
+          onclick="event.stopPropagation()">
+          {{ artist.name }}
+        </a>
+        {%- if not loop.last %}, {% endif %}
+        {% endfor %}
+        {% if song.album %}
+        •
+        <a href="/album/{{ song.album.sources.ytmusic.id }}" hx-get="/album/{{ song.album.sources.ytmusic.id }}"
+          hx-target="#content" hx-push-url="true" class="hover:text-accent transition-colors duration-200"
+          onclick="event.stopPropagation()">
+          {{ song.album.name }}
+        </a>
+        {% endif %}
+      </p>
+    </div>
+    <div class="text-sm text-muted">{{ duration_format(song.duration) }}</div>
+  </div>
+</div>
+{% endmacro %}

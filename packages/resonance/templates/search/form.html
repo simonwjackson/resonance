@@ -1,0 +1,54 @@
+<form class="space-y-4 mb-8"
+      hx-get="/search"
+      hx-trigger="submit,change"
+      hx-target="#search-results"
+      hx-indicator="#search-indicator"
+      hx-push-url="true">
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Search Input -->
+        <div class="md:col-span-3">
+            <label for="search-input" class="block text-sm font-medium text-secondary mb-1">
+                Search Query
+            </label>
+            <input type="text"
+                   id="search-input"
+                   name="q"
+                   value="{{ request.args.get('q', '') }}"
+                   class="w-full rounded-md border-secondary bg-primary text-primary shadow-sm focus:border-accent focus:ring-accent"
+                   placeholder="Enter artist, album, song, or playlist name..."
+                   hx-trigger="keyup changed delay:500ms">
+        </div>
+        
+        <!-- Type Selector -->
+        <div>
+            <label for="search-type" class="block text-sm font-medium text-secondary mb-1">
+                Search Type
+            </label>
+            <select id="search-type"
+                    name="type"
+                    class="w-full rounded-md border-secondary bg-primary text-primary shadow-sm focus:border-accent focus:ring-accent">
+                <option value="all" {% if request.args.get('type') == 'all' %}selected{% endif %}>
+                    All Types
+                </option>
+                <option value="artist" {% if request.args.get('type') == 'artist' %}selected{% endif %}>
+                    Artists
+                </option>
+                <option value="album" {% if request.args.get('type') == 'album' %}selected{% endif %}>
+                    Albums
+                </option>
+                <option value="song" {% if request.args.get('type') == 'song' %}selected{% endif %}>
+                    Songs
+                </option>
+                <option value="playlist" {% if request.args.get('type') == 'playlist' %}selected{% endif %}>
+                    Playlists
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Search Indicator -->
+    <div id="search-indicator" class="htmx-indicator flex justify-center py-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+    </div>
+</form>

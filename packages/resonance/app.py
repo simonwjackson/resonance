@@ -200,9 +200,11 @@ def search():
             logger.error(f"Search error: {str(e)}")
 
     if request.headers.get("HX-Request"):
-        return render_template("partials/search-results.html", results=results)
+        return render_template("search/index.html", results=results)
 
-    return render_template("search.html", results=results, selected_item=selected_item)
+    return render_template(
+        "search/index.html", results=results, selected_item=selected_item
+    )
 
 
 @web.route("/<type>/<id>")

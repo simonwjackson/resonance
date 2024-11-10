@@ -1,0 +1,28 @@
+{% from "search/results/song-row.html" import song_row %}
+
+{% if results | selectattr("type", "equalto", "song") | list %}
+<div class="space-y-6 mt-8">
+  <h2 class="text-lg font-semibold text-primary">Songs</h2>
+  <div class="space-y-2">
+    {% for song in results | selectattr("type", "equalto", "song") %}
+    {{ song_row(song) }}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<script>
+  function handleSongClick(songId) {
+    fetch(`/api/show/song/${songId}`, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(songData => {
+        const playlist = [songData];
+        AudioPlayer.playlist.load(playlist);
+        AudioPlayer.play();
+      });
+  }
+</script>

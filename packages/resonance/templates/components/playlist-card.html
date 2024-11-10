@@ -1,0 +1,21 @@
+{% macro playlist_card(playlist) %}
+<div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4">
+  <a href="/playlist/{{ playlist.sources.ytmusic.id }}" hx-get="/playlist/{{ playlist.sources.ytmusic.id }}"
+    hx-target="#content" hx-push-url="true" class="block">
+    {% if playlist.thumbnail %}
+    <img src="{{ playlist.thumbnail.url }}" alt="{{ playlist.name }}"
+      class="w-full aspect-square object-cover rounded-lg mb-3" />
+    {% endif %}
+    <h3 class="font-medium text-primary hover:text-accent transition-colors duration-200">
+      {{ playlist.name }}
+    </h3>
+    <div class="flex items-center text-sm text-muted mt-1 gap-2">
+      <span>Playlist</span>
+      {% if playlist.song_count %}
+      <span>•</span>
+      <span>{{ playlist.song_count }} songs</span>
+      {% endif %}
+    </div>
+  </a>
+</div>
+{% endmacro %}

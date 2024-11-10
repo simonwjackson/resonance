@@ -1,0 +1,13 @@
+{% macro artist_card(artist) %}
+<a href="/artist/{{ artist.sources.ytmusic.id }}" hx-get="/artist/{{ artist.sources.ytmusic.id }}" hx-target="#content"
+  hx-push-url="true" class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200 p-4">
+  {% if artist.thumbnail %}
+  <img src="{{ artist.thumbnail.url }}" alt="{{ artist.name }}"
+    class="w-full aspect-square object-cover rounded-lg mb-3" />
+  {% endif %}
+  <h3 class="font-medium text-primary">{{ artist.name }}</h3>
+  {% if artist.genres %}
+  <p class="text-sm text-muted mt-1">{{ artist.genres[0] }}</p>
+  {% endif %}
+</a>
+{% endmacro %}
