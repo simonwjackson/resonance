@@ -1,9 +1,9 @@
 <div id="search-results" class="space-y-8">
   {% if results %}
-  {% include "search/results/sections/artists.html" %}
-  {% include "search/results/sections/albums.html" %}
-  {% include "search/results/sections/songs.html" %}
-  {% include "search/results/sections/playlists.html" %}
+  {% include "default/components/search/results/sections/artists.html" %}
+  {% include "default/components/search/results/sections/albums.html" %}
+  {% include "default/components/search/results/sections/songs.html" %}
+  {% include "default/components/search/results/sections/playlists.html" %}
   {% elif request.args.get('q') %}
   <div class="text-center py-8">
     <p class="text-muted">No results found for "{{ request.args.get('q') }}"</p>

@@ -42,24 +42,15 @@ def search():
 
     # For HTMX requests, return only results
     if request.headers.get("HX-Request"):
-        try:
-            return render_template(
-                "default/components/search/results/index.html", results=results
-            )
-        except:
-            return render_template("search/results/index.html", results=results)
+        return render_template(
+            "default/components/search/results/index.html", results=results
+        )
 
-    # For full page requests
-    try:
-        return render_template(
-            "default/pages/search/index.html",
-            results=results,
-            selected_item=selected_item,
-        )
-    except:
-        return render_template(
-            "search/index.html", results=results, selected_item=selected_item
-        )
+    return render_template(
+        "default/pages/search/index.html",
+        results=results,
+        selected_item=selected_item,
+    )
 
 
 @web.route("/album/<id>")
@@ -70,16 +61,9 @@ def show_album(id: str):
 
         # For HTMX requests, check if new template exists, otherwise fall back
         if request.headers.get("HX-Request"):
-            try:
-                return render_template("default/pages/album/[id].html", item=result)
-            except:
-                return render_template("partials/album.html", item=result)
-
-        # For full page requests, try new path first, fall back to old
-        try:
             return render_template("default/pages/album/[id].html", item=result)
-        except:
-            return render_template("partials/album.html", item=result)
+
+        return render_template("default/pages/album/[id].html", item=result)
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
@@ -94,16 +78,9 @@ def show_artist(id: str):
 
         # For HTMX requests, check if new template exists, otherwise fall back
         if request.headers.get("HX-Request"):
-            try:
-                return render_template("default/pages/artist/[id].html", item=result)
-            except:
-                return render_template("partials/artist.html", item=result)
-
-        # For full page requests, try new path first, fall back to old
-        try:
             return render_template("default/pages/artist/[id].html", item=result)
-        except:
-            return render_template("partials/artist.html", item=result)
+
+        return render_template("default/pages/artist/[id].html", item=result)
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
@@ -130,71 +107,25 @@ def show_details(type: str, id: str):
 
 @web.app_errorhandler(400)
 def bad_request(error):
-    if request.headers.get("HX-Request"):
-        try:
-            return (
-                render_template(
-                    "default/partials/errors/400.html", error=error.description
-                ),
-                400,
-            )
-        except:
-            return render_template("errors/400.html", error=error.description), 400
-    try:
-        return (
-            render_template(
-                "default/partials/errors/400.html", error=error.description
-            ),
-            400,
-        )
-    except:
-        return render_template("errors/400.html", error=error.description), 400
+    return (
+        render_template("default/partials/errors/400.html", error=error.description),
+        400,
+    )
 
 
 @web.app_errorhandler(404)
 def not_found(error):
-    if request.headers.get("HX-Request"):
-        try:
-            return (
-                render_template(
-                    "default/partials/errors/404.html", error=error.description
-                ),
-                404,
-            )
-        except:
-            return render_template("errors/404.html", error=error.description), 404
-    try:
-        return (
-            render_template(
-                "default/partials/errors/404.html", error=error.description
-            ),
-            404,
-        )
-    except:
-        return render_template("errors/404.html", error=error.description), 404
+    return (
+        render_template("default/partials/errors/404.html", error=error.description),
+        404,
+    )
 
 
 @web.app_errorhandler(500)
 def server_error(error):
-    if request.headers.get("HX-Request"):
-        try:
-            return (
-                render_template(
-                    "default/partials/errors/500.html", error="Internal server error"
-                ),
-                500,
-            )
-        except:
-            return (
-                render_template("errors/500.html", error="Internal server error"),
-                500,
-            )
-    try:
-        return (
-            render_template(
-                "default/partials/errors/500.html", error="Internal server error"
-            ),
-            500,
-        )
-    except:
-        return render_template("errors/500.html", error="Internal server error"), 500
+    return (
+        render_template(
+            "default/partials/errors/500.html", error="Internal server error"
+        ),
+        500,
+    )

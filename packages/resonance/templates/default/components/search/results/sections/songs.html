@@ -1,4 +1,4 @@
-{% from "search/results/song-row.html" import song_row %}
+{% from "default/components/search/results/song-row.html" import song_row %}
 
 {% if results | selectattr("type", "equalto", "song") | list %}
 <div class="space-y-6 mt-8">
