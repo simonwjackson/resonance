@@ -15,7 +15,7 @@ web = Blueprint("web", __name__)
 @web.route("/")
 def index():
     """Main page with search interface"""
-    return render_template("index.html")
+    return render_template("default/pages/index.html")
 
 
 @web.route("/search")
