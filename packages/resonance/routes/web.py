@@ -47,6 +47,30 @@ def search():
     )
 
 
+@web.route("/album/<id>")
+def show_album(id: str):
+    """Show detailed view of an album"""
+    try:
+        result = run_deadwax_command(f"show/album", id)
+
+        # For HTMX requests, check if new template exists, otherwise fall back
+        if request.headers.get("HX-Request"):
+            try:
+                return render_template("default/pages/album/[id].html", item=result)
+            except:
+                return render_template("partials/album.html", item=result)
+
+        # For full page requests, try new path first, fall back to old
+        try:
+            return render_template("default/pages/album/[id].html", item=result)
+        except:
+            return render_template("partials/album.html", item=result)
+
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
+        abort(500)
+
+
 @web.route("/<type>/<id>")
 def show_details(type: str, id: str):
     """Show detailed view of a resource"""

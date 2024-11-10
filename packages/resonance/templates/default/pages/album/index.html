@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-secondary rounded-lg shadow p-6">
+  <h1 class="text-2xl font-bold mb-6 text-primary">Search Music</h1>
+
+  <form
+    class="space-y-4"
+    hx-get="/search"
+    hx-trigger="submit,change"
+    hx-target="#search-results"
+    hx-push-url="true"
+  >
+    <div class="flex gap-4">
+      <input
+        type="text"
+        name="q"
+        class="flex-1 rounded-md border-gray-300 bg-primary text-primary placeholder-muted shadow-sm focus:border-primary-500 focus:ring-primary-500"
+        placeholder="Search for music..."
+        hx-trigger="keyup changed delay:500ms"
+      />
+
+      <select
+        name="type"
+        class="rounded-md border-gray-300 bg-primary text-primary shadow-sm focus:border-primary-500 focus:ring-primary-500"
+      >
+        <option value="all">All</option>
+        <option value="artist">Artists</option>
+        <option value="album">Albums</option>
+        <option value="song">Songs</option>
+        <option value="playlist">Playlists</option>
+      </select>
+    </div>
+  </form>
+
+  <div id="search-results" class="mt-8">
+    <!-- Search results will be loaded here -->
+  </div>
+</div>
+{% endblock %}
