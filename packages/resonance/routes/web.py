@@ -128,23 +128,73 @@ def show_details(type: str, id: str):
         abort(500)
 
 
-# Error handlers
 @web.app_errorhandler(400)
 def bad_request(error):
     if request.headers.get("HX-Request"):
+        try:
+            return (
+                render_template(
+                    "default/partials/errors/400.html", error=error.description
+                ),
+                400,
+            )
+        except:
+            return render_template("errors/400.html", error=error.description), 400
+    try:
+        return (
+            render_template(
+                "default/partials/errors/400.html", error=error.description
+            ),
+            400,
+        )
+    except:
         return render_template("errors/400.html", error=error.description), 400
-    return render_template("errors/400.html", error=error.description), 400
 
 
 @web.app_errorhandler(404)
 def not_found(error):
     if request.headers.get("HX-Request"):
+        try:
+            return (
+                render_template(
+                    "default/partials/errors/404.html", error=error.description
+                ),
+                404,
+            )
+        except:
+            return render_template("errors/404.html", error=error.description), 404
+    try:
+        return (
+            render_template(
+                "default/partials/errors/404.html", error=error.description
+            ),
+            404,
+        )
+    except:
         return render_template("errors/404.html", error=error.description), 404
-    return render_template("errors/404.html", error=error.description), 404
 
 
 @web.app_errorhandler(500)
 def server_error(error):
     if request.headers.get("HX-Request"):
+        try:
+            return (
+                render_template(
+                    "default/partials/errors/500.html", error="Internal server error"
+                ),
+                500,
+            )
+        except:
+            return (
+                render_template("errors/500.html", error="Internal server error"),
+                500,
+            )
+    try:
+        return (
+            render_template(
+                "default/partials/errors/500.html", error="Internal server error"
+            ),
+            500,
+        )
+    except:
         return render_template("errors/500.html", error="Internal server error"), 500
-    return render_template("errors/500.html", error="Internal server error"), 500
