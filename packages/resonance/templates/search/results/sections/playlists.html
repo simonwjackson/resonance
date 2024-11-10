@@ -1,4 +1,4 @@
-{% from "components/playlist-card.html" import playlist_card %}
+{% from "default/components/playlist-card.html" import playlist_card %}
 
 {% if results | selectattr("type", "equalto", "playlist") | list %}
 <div class="space-y-6 mt-8">

@@ -7,11 +7,11 @@ Events:
 #}
 <div id="audio-player" class="w-full" hx-preserve="true">
   <audio id="audio-element" preload="metadata"></audio>
-  {% include "components/audio/progress-bar.html" %}
+  {% include "default/components/audio/progress-bar.html" %}
   <div class="grid grid-cols-3 gap-4 px-4 py-3">
-    {% include "components/audio/track-info.html" %}
-    {% include "components/audio/playback-controls.html" %}
-    {% include "components/audio/volume-controls.html" %}
+    {% include "default/components/audio/track-info.html" %}
+    {% include "default/components/audio/playback-controls.html" %}
+    {% include "default/components/audio/volume-controls.html" %}
   </div>
 </div>
 

@@ -1,4 +1,4 @@
-{% from "components/artist-card.html" import artist_card %}
+{% from "default/components/artist-card.html" import artist_card %}
 
 {% if results | selectattr("type", "equalto", "artist") | list %}
 <div class="space-y-6">
