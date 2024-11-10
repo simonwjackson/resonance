@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Search - Music Library{% endblock %}
+{% block title %}xSearch - Music Library{% endblock %}
 
 {% block content %}
 <div class="min-h-screen">
@@ -8,13 +8,30 @@
         <h1 class="text-2xl font-bold mb-6 text-primary">Search Music Library</h1>
         
         <!-- Search Form Component -->
-        {% include "search/form.html" %}
+        {% include "default/components/search/form.html" %}
 
         <!-- Filters Component -->
-        {% include "search/filters.html" %}
+        {% include "default/components/search/filters.html" %}
 
         <!-- Results Component -->
-        {% include "search/results/index.html" %}
+        <div id="search-results" class="space-y-8">
+            {% if results %}
+                {% include "default/components/search/results/artist-grid.html" %}
+                {% include "default/components/search/results/album-grid.html" %}
+                {% include "default/components/search/results/song-list.html" %}
+                {% include "default/components/search/results/playlist-grid.html" %}
+            {% elif request.args.get('q') %}
+                <div class="text-center py-8">
+                    <p class="text-muted">No results found for "{{ request.args.get('q') }}"</p>
+                    <p class="text-sm text-muted mt-2">Try adjusting your search terms or filters</p>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-muted">Enter your search terms above to begin</p>
+                    <p class="text-sm text-muted mt-2">You can search for artists, albums, songs, or playlists</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Details View -->
@@ -28,5 +45,3 @@
 <!-- Toast Messages -->
 <div id="toast-container" class="fixed bottom-4 right-4 space-y-2" hx-trigger="showToast from:body"></div>
 {% endblock %}
-
-

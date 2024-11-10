@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Music Library{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="bg-secondary rounded-lg shadow-lg p-6 mb-8">
+        <h1 class="text-2xl font-bold mb-6 text-primary">Search Music Library</h1>
+        {% include "search/form.html" %}
+        {% include "search/filters.html" %}
+        {% include "search/results/index.html" %}
+    </div>
+
+    <!-- Details View -->
+    <div id="details-view" class="bg-secondary rounded-lg shadow-lg p-6 {% if not selected_item %}hidden{% endif %}">
+        {% if selected_item %}
+            {% include selected_item.type + ".html" %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast Messages -->
+<div id="toast-container" class="fixed bottom-4 right-4 space-y-2" hx-trigger="showToast from:body"></div>
+{% endblock %}

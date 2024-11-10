@@ -20,6 +20,7 @@ def index():
 
 @web.route("/search")
 def search():
+    """Handle search requests"""
     query = request.args.get("q", "")
     search_type = request.args.get("type", "all")
     sort = request.args.get("sort", "relevance")
@@ -39,12 +40,26 @@ def search():
         except Exception as e:
             logger.error(f"Search error: {str(e)}")
 
+    # For HTMX requests, return only results
     if request.headers.get("HX-Request"):
-        return render_template("search/results/index.html", results=results)
+        try:
+            return render_template(
+                "default/components/search/results/index.html", results=results
+            )
+        except:
+            return render_template("search/results/index.html", results=results)
 
-    return render_template(
-        "search/index.html", results=results, selected_item=selected_item
-    )
+    # For full page requests
+    try:
+        return render_template(
+            "default/pages/search/index.html",
+            results=results,
+            selected_item=selected_item,
+        )
+    except:
+        return render_template(
+            "search/index.html", results=results, selected_item=selected_item
+        )
 
 
 @web.route("/album/<id>")
@@ -65,6 +80,30 @@ def show_album(id: str):
             return render_template("default/pages/album/[id].html", item=result)
         except:
             return render_template("partials/album.html", item=result)
+
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
+        abort(500)
+
+
+@web.route("/artist/<id>")
+def show_artist(id: str):
+    """Show detailed view of an artist"""
+    try:
+        result = run_deadwax_command(f"show/artist", id)
+
+        # For HTMX requests, check if new template exists, otherwise fall back
+        if request.headers.get("HX-Request"):
+            try:
+                return render_template("default/pages/artist/[id].html", item=result)
+            except:
+                return render_template("partials/artist.html", item=result)
+
+        # For full page requests, try new path first, fall back to old
+        try:
+            return render_template("default/pages/artist/[id].html", item=result)
+        except:
+            return render_template("partials/artist.html", item=result)
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
