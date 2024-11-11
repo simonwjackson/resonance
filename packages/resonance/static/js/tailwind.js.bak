@@ -1,13 +1,6 @@
 tailwind.config = {
   darkMode: ['class', '[data-theme="dark"]'],
   theme: {
-    fontFamily: {
-      "display": ["Inter", "system-ui", "sans-serif"],
-      "body": ["Inter", "system-ui", "sans-serif"]
-    },
-    letterSpacing: {
-      "tight": "-0.015em"
-    },
     extend: {
       backgroundColor: {
         primary: 'var(--background-primary)',

@@ -1,10 +1,6 @@
-{# Component: Progress Bar
-Description: Track progress indicator with draggable handle
-Required context: None
-Events: Dispatches progress-changed on seek
-#}
-<div class="relative h-1 bg-secondary-200 group cursor-pointer" id="progress-container">
-  <div id="progress-bar" class="absolute left-0 top-0 h-full bg-accent rounded-full" style="width: 0%">
+<div class="relative h-1 bg-secondary-200 group cursor-pointer overflow-hidden" id="progress-container">
+  <div class="absolute inset-0 bg-gradient-to-r from-accent to-accent-light opacity-20"></div>
+  <div id="progress-bar" class="absolute left-0 top-0 h-full bg-gradient-to-r from-accent to-accent-light" style="width: 0%">
   </div>
   <div id="progress-handle" class="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-accent rounded-full shadow-lg 
               cursor-pointer opacity-0 group-hover:opacity-100 hover:scale-110 transition-all" style="left: 0%">

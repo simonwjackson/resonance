@@ -118,3 +118,42 @@ html {
 :root[data-theme="night"] img {
   filter: brightness(0.8) contrast(1.2);
 }
+
+/* Enhanced gradient and animation styles */
+:root {
+  --gradient-primary: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+  --gradient-hover: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+}
+
+.play-button {
+  background: var(--gradient-primary);
+  transition: background 0.3s ease;
+}
+
+.play-button:hover {
+  background: var(--gradient-hover);
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Pulse animation for play button */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.play-button:hover {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Glass Morphism Effect */
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
