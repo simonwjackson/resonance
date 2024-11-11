@@ -1,17 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Music Library{% endblock %}</title>
-  
-  <!-- Scripts -->
-  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="{{ url_for('static', filename='js/tailwind.js') }}"></script>
-  
-  <!-- Styles -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}" />
+  {% include "default/partials/meta.html" %}
 </head>
 
 <body class="min-h-screen bg-primary text-primary transition-colors duration-200 flex flex-col" hx-boost="true">

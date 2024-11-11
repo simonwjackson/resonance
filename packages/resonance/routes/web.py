@@ -61,9 +61,11 @@ def show_album(id: str):
 
         # For HTMX requests, check if new template exists, otherwise fall back
         if request.headers.get("HX-Request"):
-            return render_template("default/pages/album/[id].html", item=result)
+            return render_template(
+                "default/pages/album/components/detail.html", item=result
+            )
 
-        return render_template("default/pages/album/[id].html", item=result)
+        return render_template("default/pages/album/index.html", item=result)
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
@@ -78,9 +80,11 @@ def show_artist(id: str):
 
         # For HTMX requests, check if new template exists, otherwise fall back
         if request.headers.get("HX-Request"):
-            return render_template("default/pages/artist/[id].html", item=result)
+            return render_template(
+                "default/pages/artist/components/detail.html", item=result
+            )
 
-        return render_template("default/pages/artist/[id].html", item=result)
+        return render_template("default/pages/artist/index.html", item=result)
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")

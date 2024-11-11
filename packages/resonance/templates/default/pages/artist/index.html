@@ -1,0 +1,9 @@
+{% extends "default/pages/base.html" %}
+
+{% block title %}{{ item.artist }} - Artist Details{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    {% include "default/pages/artist/components/detail.html" %}
+</div>
+{% endblock %}

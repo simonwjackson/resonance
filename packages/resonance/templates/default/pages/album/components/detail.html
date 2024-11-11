@@ -1,7 +1,3 @@
-{% extends "default/pages/base.html" %}
-{% block title %}{{ item.name }} - Album Details{% endblock %}
-
-{% block content %}
 <div class="bg-secondary rounded-lg shadow-lg p-6">
   <!-- Album Header -->
   <div class="flex flex-col md:flex-row gap-6 mb-8">
@@ -19,7 +15,10 @@
         <div class="text-lg text-secondary">
           {% for artist in item.artists %}
             <a href="/artist/{{ artist.sources.ytmusic.id }}"
-               class="hover:text-primary-500 hover:underline">
+               hx-get="/artist/{{ artist.sources.ytmusic.id }}"
+               hx-target="#content"
+               hx-push-url="true"
+               class="hover:text-accent transition-colors duration-200">
               {{ artist.name }}
             </a>
             {%- if not loop.last %}, {% endif %}
@@ -90,18 +89,22 @@
     </div>
   {% endif %}
 
-  <!-- Related Albums (if available) -->
+  <!-- Related Albums -->
   {% if item.related_albums %}
     <div class="mt-12">
       <h2 class="text-xl font-semibold mb-4 text-primary">More from {{ item.artists[0].name }}</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {% for album in item.related_albums %}
-          <a href="/album/{{ album.sources.ytmusic.id }}" class="group">
+          <a href="/album/{{ album.sources.ytmusic.id }}" 
+             hx-get="/album/{{ album.sources.ytmusic.id }}"
+             hx-target="#content"
+             hx-push-url="true"
+             class="group">
             <img src="{{ album.thumbnail.url }}"
                  alt="{{ album.name }}"
                  class="w-full aspect-square object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-200" />
             <div class="mt-2">
-              <div class="font-medium text-primary group-hover:text-primary-500 transition-colors duration-150">
+              <div class="font-medium text-primary group-hover:text-accent transition-colors duration-150">
                 {{ album.name }}
               </div>
               <div class="text-sm text-muted">{{ album.year }}</div>
@@ -112,4 +115,3 @@
     </div>
   {% endif %}
 </div>
-{% endblock %}
