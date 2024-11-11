@@ -1,3 +1,4 @@
+{% macro artist_detail(item) %}
 <div class="bg-secondary rounded-lg shadow-lg p-6">
   <!-- Artist Header -->
   <div class="flex flex-col md:flex-row gap-6 mb-8">
@@ -14,31 +15,11 @@
   <div class="mt-8">
     <h2 class="text-2xl font-semibold mb-6 text-primary">Discography</h2>
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {% from "default/components/album-card.html" import album_card %}
       {% for album in item.albums %}
-        <div class="bg-primary rounded-lg shadow hover:shadow-md transition-shadow duration-200">
-          <a href="/album/{{ album.sources.ytmusic.id }}"
-             hx-get="/album/{{ album.sources.ytmusic.id }}"
-             hx-target="#content"
-             hx-push-url="true"
-             class="block">
-            <img src="{{ album.thumbnail.url | replace('w120-h120', 'w500-h500') }}"
-                 alt="{{ album.name }}"
-                 class="w-full aspect-square object-cover rounded-t-lg" />
-          </a>
-          <div class="p-4">
-            <h3 class="font-medium text-primary">
-              <a href="/album/{{ album.sources.ytmusic.id }}"
-                 hx-get="/album/{{ album.sources.ytmusic.id }}"
-                 hx-target="#content"
-                 hx-push-url="true"
-                 class="hover:text-accent transition-colors duration-200">{{ album.name }}</a>
-            </h3>
-            {% if album.year %}
-                <p class="text-sm text-muted mt-1">{{ album.year }}</p>
-            {% endif %}
-          </div>
-        </div>
+      {{ album_card(album) }}
       {% endfor %}
     </div>
   </div>
 </div>
+{% endmacro %}

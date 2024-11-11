@@ -4,6 +4,7 @@
 
 {% block content %}
 <div class="container mx-auto px-4">
-    {% include "default/pages/artist/components/detail.html" %}
+    {% from "default/pages/artist/components/detail.html" import artist_detail %}
+    {{ artist_detail(item) }}
 </div>
 {% endblock %}
